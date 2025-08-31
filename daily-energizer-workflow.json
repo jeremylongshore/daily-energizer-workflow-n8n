@@ -88,12 +88,12 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=You are about to review a curated list of real, uplifting news stories collected from:\n- Global AI-powered search (Tavily)\n- Positive news RSS feeds\n\nEach story includes a title and summary. Your mission is to identify the single most inspiring, energizing story that will have the greatest positive emotional and global impact today.\n\n---\n\n📚 Stories to Evaluate:\n\n{{ $json.promptText }}\n\n---\n\n🧠 **Scoring Instructions**:\n\nFor each story, silently evaluate and score it on a scale from 1 to 5 in each of the following:\n\n- **Emotional Impact**: How much does this story inspire joy, hope, wonder, or unity?\n- **Global Resonance**: Will people across diverse countries and cultures be moved by it?\n- **Freshness**: Was it published within the last 48 hours?\n\nAdd the scores (max = 15). Select the highest-scoring story. In the event of a tie, choose the one with the most specific and emotionally vivid details (people, places, outcomes, quotes).\n\n⚠️ Only select from the provided list. Do not invent, alter, or reword any story title or summary.\n\n---\n\n✅ **Final Output Format**:\n```json\n{\n  \"title\": \"The exact title of the chosen story\",\n  \"summary\": \"The exact summary of the chosen story\",\n  \"reason\": \"One sentence explaining why this story was chosen, focusing on emotional impact and global relevance\"\n}",
+        "text": "=CRITICAL ANTI-HALLUCINATION REQUIREMENTS:\n\nYOU MUST FOLLOW THESE RULES OR THE SYSTEM WILL FAIL:\n1. You can ONLY select a story that is EXACTLY in the provided list\n2. You CANNOT create, modify, or reword ANY part of any story\n3. You MUST copy the title and summary EXACTLY as provided\n4. You MUST verify the story is less than 48 hours old\n5. If no stories meet ALL criteria, you MUST return an error\n\nSELECTION PROCESS:\n1. Read each story carefully\n2. Check Hours Old - if over 48, skip it\n3. Score each valid story:\n   - Emotional Impact (1-5): How uplifting and inspiring?\n   - Global Relevance (1-5): Universal appeal across cultures?\n   - Specificity (1-5): Concrete details, names, places?\n4. Select the highest total score\n5. Copy the EXACT title and summary\n\nStories to Evaluate:\n{{ $json.promptText }}\n\nOUTPUT FORMAT (MUST BE VALID JSON):\n{\n  \"title\": \"[EXACT title from the list - DO NOT MODIFY]\",\n  \"summary\": \"[EXACT summary from the list - DO NOT MODIFY]\",\n  \"reason\": \"[One sentence why this was most inspiring]\",\n  \"story_number\": [The story number from the list],\n  \"hours_old\": [Hours old from the list],\n  \"verification\": \"confirmed_from_list\"\n}\n\nREMEMBER: If you create or modify ANY content, the system will fail and harm users with false information.",
         "hasOutputParser": true,
         "messages": {
           "messageValues": [
             {
-              "message": "You are an AI assistant for \"The Daily Energizer,\" a global daily inspiration and energizer newsletter. Your task is to select the single most uplifting and inspiring real news story from a provided list of candidates (each with a title and summary).\n\nGoal: Choose the story that has the greatest potential to uplift, inspire, and energize billions of people worldwide. It should be a story that could brighten the entire planet's mood — not just a pleasant piece of news, but something deeply moving and universally positive.\n\nCriteria for selection:\n- Freshness: from the last 48 hours (very recent news).\n- Authenticity: a real, factual news story (uplifting and positive in nature).\n- Global Resonance: relevant and heartwarming to people across different countries and cultures.\n- Emotional Impact: inspires strong positive emotions (hope, joy, optimism, unity, etc.) on a broad scale.\n\nCarefully read and consider each story. Weigh their emotional power and global appeal. Silently analyze each candidate's potential (do not output your analysis), and determine which one stands out as the most powerful uplifting story for the largest number of people worldwide.\n\nOutput format:\nProvide your result as a JSON object with exactly three keys:\n- \"title\": The exact title of the chosen story.\n- \"summary\": The summary of the chosen story (as given).\n- \"reason\": One sentence explaining why this story was chosen, focusing on its emotional impact and global inspirational value.\n\nOutput only the JSON object with no extra text or commentary. Ensure the JSON is properly formatted and contains only the details of the chosen story.\n\nWhen reviewing the candidate stories, please prioritize and select the story that includes rich and specific details such as the location (city, state and country if possible), the full names of any individuals involved if possible, and clear key and detailed aspects of the event. Favor stories that provide enough context and detail to allow the final article to be fully informative, engaging and inspiring.\n\n"
+              "message": "You are an AI assistant for \"The Daily Energizer\" with STRICT requirements:\n\nCRITICAL: You MUST NOT hallucinate or create fake stories. You can ONLY select from the exact list provided. Any deviation will cause system failure.\n\nYour task: Select the single most uplifting real news story from the provided list.\n\nABSOLUTE REQUIREMENTS:\n- ONLY select stories exactly as they appear in the list\n- NEVER modify, reword, or embellish any content\n- VERIFY story is less than 48 hours old\n- Copy title and summary EXACTLY character-for-character\n\nSelection criteria:\n- Freshness: Must be from last 48 hours\n- Authenticity: Real, factual news only\n- Global Resonance: Appeals across cultures\n- Emotional Impact: Deeply inspiring and uplifting\n\nOutput ONLY valid JSON with exact copies from the list. Any hallucination or modification is a critical failure.\n\n"
             }
           ]
         }
@@ -175,7 +175,8 @@
     {
       "parameters": {
         "options": {
-          "maxTokens": 1000
+          "maxTokens": 1000,
+          "temperature": 0
         }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
@@ -197,7 +198,7 @@
       "parameters": {
         "options": {
           "maxTokens": 1200,
-          "temperature": 0.4
+          "temperature": 0
         }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
@@ -413,7 +414,8 @@
     {
       "parameters": {
         "options": {
-          "maxTokens": 500
+          "maxTokens": 500,
+          "temperature": 0
         }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
