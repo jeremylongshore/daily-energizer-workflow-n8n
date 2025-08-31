@@ -808,7 +808,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const stories = items[0].json.stories;\n\nconst formatted = stories.map((story, index) => {\n  return `Story ${index + 1}:\\nTitle: ${story.title}\\nSummary: ${story.summary}\\n`;\n}).join('\\n');\n\nreturn [{\n  json: {\n    promptText: formatted\n  }\n}];"
+        "jsCode": "const stories = items[0].json.stories;\n\nif (!stories || stories.length === 0) {\n  throw new Error(\"No stories found to format!\");\n}\n\nconst formatted = stories.map((story, index) => {\n  // Validate required fields\n  if (!story.title || !story.summary || !story.pubDate) {\n    console.log(`Story ${index + 1} missing required fields:`, story);\n    return null;\n  }\n  \n  const hoursOld = story.hours_old || 'Unknown';\n  \n  return `Story ${index + 1}:\\nTitle: ${story.title}\\nSummary: ${story.summary}\\nPublished: ${story.pubDate}\\nHours Old: ${hoursOld}`;\n}).filter(s => s !== null).join('\\n\\n');\n\nif (formatted.length === 0) {\n  throw new Error(\"No valid stories to format!\");\n}\n\nreturn [{\n  json: {\n    promptText: formatted,\n    storyCount: stories.length,\n    timestamp: new Date().toISOString()\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
