@@ -175,7 +175,8 @@
     {
       "parameters": {
         "options": {
-          "maxTokens": 1000
+          "maxTokens": 1000,
+          "temperature": 0
         }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
@@ -197,7 +198,7 @@
       "parameters": {
         "options": {
           "maxTokens": 1200,
-          "temperature": 0.4
+          "temperature": 0
         }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
@@ -413,7 +414,8 @@
     {
       "parameters": {
         "options": {
-          "maxTokens": 500
+          "maxTokens": 500,
+          "temperature": 0
         }
       },
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
