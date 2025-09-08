@@ -88,7 +88,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=CRITICAL ANTI-HALLUCINATION REQUIREMENTS:\n\nYOU MUST FOLLOW THESE RULES OR THE SYSTEM WILL FAIL:\n1. You can ONLY select a story that is EXACTLY in the provided list\n2. You CANNOT create, modify, or reword ANY part of any story\n3. You MUST copy the title and summary EXACTLY as provided\n4. You MUST verify the story is less than 48 hours old\n5. If no stories meet ALL criteria, you MUST return an error\n\nSELECTION PROCESS:\n1. Read each story carefully\n2. Check Hours Old - if over 48, skip it\n3. Score each valid story:\n   - Emotional Impact (1-5): How uplifting and inspiring?\n   - Global Relevance (1-5): Universal appeal across cultures?\n   - Specificity (1-5): Concrete details, names, places?\n4. Select the highest total score\n5. Copy the EXACT title and summary\n\nStories to Evaluate:\n{{ $json.promptText }}\n\nOUTPUT FORMAT (MUST BE VALID JSON):\n{\n  \"title\": \"[EXACT title from the list - DO NOT MODIFY]\",\n  \"summary\": \"[EXACT summary from the list - DO NOT MODIFY]\",\n  \"reason\": \"[One sentence why this was most inspiring]\",\n  \"story_number\": [The story number from the list],\n  \"hours_old\": [Hours old from the list],\n  \"verification\": \"confirmed_from_list\"\n}\n\nREMEMBER: If you create or modify ANY content, the system will fail and harm users with false information.",
+        "text": "=CRITICAL ANTI-HALLUCINATION REQUIREMENTS:\n\nYOU MUST FOLLOW THESE RULES OR THE SYSTEM WILL FAIL:\n1. You can ONLY select a story that is EXACTLY in the provided list\n2. You CANNOT create, modify, or reword ANY part of any story\n3. You MUST copy the title and summary EXACTLY as provided\n4. You MUST verify the story is less than 48 hours old\n5. If no stories meet ALL criteria, you MUST return an error\n\nSELECTION PROCESS:\n1. Read each story carefully\n2. Check Hours Old - if over 48, skip it\n3. Score each valid story:\n   - Emotional Impact (1-5): How uplifting and inspiring?\n   - Global Relevance (1-5): Universal appeal across cultures?\n   - Specificity (1-5): Concrete details, names, places?\n4. Select the highest total score\n5. Copy the EXACT title and summary\n\nStories to Evaluate:\n{{ $json.promptText }}\n\nOUTPUT FORMAT (MUST BE VALID JSON):\n{\n  \"title\": \"exact title from the list\",\n  \"summary\": \"exact summary from the list\",\n  \"reason\": \"one sentence explaining why this was most inspiring\",\n  \"story_number\": 1,\n  \"hours_old\": 24,\n  \"verification\": \"confirmed_from_list\"\n}\n\nREMEMBER: Replace the example values with actual values from your selected story. If you create or modify ANY content, the system will fail and harm users with false information.",
         "hasOutputParser": true,
         "messages": {
           "messageValues": [
@@ -110,7 +110,7 @@
     {
       "parameters": {
         "promptType": "define",
-        "text": "=Selected Story Title:   {{ $('Select Story').item.json.output.title }}\nSelected Story Summary: {{ $('Select Story').item.json.output.summary }}\n\nNow, using the above story, write the full Daily Energizer article (650-750 words max). Please follow the required section structure and tone guidelines to create one of the most uplifting, super-charged, inspiring and energizing articles ever!\n\nDon't ever use emojis!",
+        "text": "=IMPORTANT: You are writing about a REAL news story that happened {{ $('Select Story').item.json.output.hours_old }} hours ago.\nDo NOT embellish or add details not in the provided summary.\nUse ONLY the information provided in the story summary.\n\nSelected Story (VERIFIED REAL):\nTitle: {{ $('Select Story').item.json.output.title }}\nSummary: {{ $('Select Story').item.json.output.summary }}\nPublished: {{ $('Select Story').item.json.output.hours_old }} hours ago\nVerification: {{ $('Select Story').item.json.output.verification }}\n\nNow, using the above story, write the full Daily Energizer article (650-750 words max). Please follow the required section structure and tone guidelines to create one of the most uplifting, super-charged, inspiring and energizing articles ever!\n\nDon't ever use emojis!",
         "messages": {
           "messageValues": [
             {
@@ -218,7 +218,7 @@
     },
     {
       "parameters": {
-        "jsonSchemaExample": "{\n  \"title\": \"My Inspiring Title\",\n  \"summary\": \"An uplifting summary of the story...\"\n}"
+        "jsonSchemaExample": "{\n  \"title\": \"Example story title here\",\n  \"summary\": \"Example story summary here\",\n  \"reason\": \"This story was chosen because it demonstrates incredible human resilience\",\n  \"story_number\": 1,\n  \"hours_old\": 24,\n  \"verification\": \"confirmed_from_list\"\n}"
       },
       "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
       "typeVersion": 1.2,
@@ -810,7 +810,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const stories = items[0].json.stories;\n\nif (!stories || stories.length === 0) {\n  throw new Error(\"No stories found to format!\");\n}\n\nconst formatted = stories.map((story, index) => {\n  // Validate required fields\n  if (!story.title || !story.summary || !story.pubDate) {\n    console.log(`Story ${index + 1} missing required fields:`, story);\n    return null;\n  }\n  \n  const hoursOld = story.hours_old || 'Unknown';\n  \n  return `Story ${index + 1}:\\nTitle: ${story.title}\\nSummary: ${story.summary}\\nPublished: ${story.pubDate}\\nHours Old: ${hoursOld}`;\n}).filter(s => s !== null).join('\\n\\n');\n\nif (formatted.length === 0) {\n  throw new Error(\"No valid stories to format!\");\n}\n\nreturn [{\n  json: {\n    promptText: formatted,\n    storyCount: stories.length,\n    timestamp: new Date().toISOString()\n  }\n}];"
+        "jsCode": "const stories = $input.first().json.stories;\n\nif (!stories || stories.length === 0) {\n  throw new Error(\"No stories found to format!\");\n}\n\nconst formatted = stories.map((story, index) => {\n  // Validate required fields\n  if (!story.title || !story.summary || !story.pubDate) {\n    console.log(`Story ${index + 1} missing required fields:`, story);\n    return null;\n  }\n  \n  const hoursOld = story.hours_old || 'Unknown';\n  \n  return `Story ${index + 1}:\\nTitle: ${story.title}\\nSummary: ${story.summary}\\nPublished: ${story.pubDate}\\nHours Old: ${hoursOld}`;\n}).filter(s => s !== null).join('\\n\\n');\n\nif (formatted.length === 0) {\n  throw new Error(\"No valid stories to format!\");\n}\n\nreturn [{\n  json: {\n    promptText: formatted,\n    storyCount: stories.length,\n    timestamp: new Date().toISOString()\n  }\n}];"
       },
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -935,6 +935,12 @@
               "name": "pubDate",
               "value": "={{ $json.pubDate }}",
               "type": "string"
+            },
+            {
+              "id": "hours-old-calc",
+              "name": "hours_old",
+              "value": "={{ Math.floor((Date.now() - new Date($json.pubDate).getTime()) / (1000 * 60 * 60)) }}",
+              "type": "number"
             }
           ]
         },
@@ -946,6 +952,37 @@
       "typeVersion": 3.4,
       "position": [
         -816,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hours_old }}",
+              "rightValue": 48,
+              "operator": {
+                "operation": "smallerEqual",
+                "type": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-48h-gnn",
+      "name": "Filter Last 48 Hours - GNN",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -608,
         128
       ]
     },
@@ -970,6 +1007,12 @@
               "name": "pubDate",
               "value": "={{ $json.pubDate }}",
               "type": "string"
+            },
+            {
+              "id": "hours-old-calc-1",
+              "name": "hours_old",
+              "value": "={{ Math.floor((Date.now() - new Date($json.pubDate).getTime()) / (1000 * 60 * 60)) }}",
+              "type": "number"
             }
           ]
         },
@@ -981,6 +1024,37 @@
       "typeVersion": 3.4,
       "position": [
         -816,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hours_old }}",
+              "rightValue": 48,
+              "operator": {
+                "operation": "smallerEqual",
+                "type": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-48h-positive",
+      "name": "Filter Last 48 Hours - Positive News",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -608,
         320
       ]
     },
@@ -1005,6 +1079,12 @@
               "name": "pubDate",
               "value": "={{ $json.pubDate }}",
               "type": "string"
+            },
+            {
+              "id": "hours-old-calc-2",
+              "name": "hours_old",
+              "value": "={{ Math.floor((Date.now() - new Date($json.pubDate).getTime()) / (1000 * 60 * 60)) }}",
+              "type": "number"
             }
           ]
         },
@@ -1016,6 +1096,37 @@
       "typeVersion": 3.4,
       "position": [
         -816,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hours_old }}",
+              "rightValue": 48,
+              "operator": {
+                "operation": "smallerEqual",
+                "type": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-48h-sunny",
+      "name": "Filter Last 48 Hours - Sunny Skyz",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -608,
         528
       ]
     },
@@ -1040,6 +1151,12 @@
               "name": "pubDate",
               "value": "={{ $json.pubDate }}",
               "type": "string"
+            },
+            {
+              "id": "hours-old-calc-3",
+              "name": "hours_old",
+              "value": "={{ Math.floor((Date.now() - new Date($json.pubDate).getTime()) / (1000 * 60 * 60)) }}",
+              "type": "number"
             }
           ]
         },
@@ -1051,6 +1168,37 @@
       "typeVersion": 3.4,
       "position": [
         -816,
+        720
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hours_old }}",
+              "rightValue": 48,
+              "operator": {
+                "operation": "smallerEqual",
+                "type": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-48h-optimist",
+      "name": "Filter Last 48 Hours - Optimist Daily",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -608,
         720
       ]
     },
@@ -1075,6 +1223,12 @@
               "name": "pubDate",
               "value": "={{ $json.pubDate }}",
               "type": "string"
+            },
+            {
+              "id": "hours-old-calc-4",
+              "name": "hours_old",
+              "value": "={{ Math.floor((Date.now() - new Date($json.pubDate).getTime()) / (1000 * 60 * 60)) }}",
+              "type": "number"
             }
           ]
         },
@@ -1086,6 +1240,37 @@
       "typeVersion": 3.4,
       "position": [
         -816,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hours_old }}",
+              "rightValue": 48,
+              "operator": {
+                "operation": "smallerEqual",
+                "type": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-48h-goodgoodgood",
+      "name": "Filter Last 48 Hours - Good Good Good",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -608,
         928
       ]
     },
@@ -1123,6 +1308,12 @@
               "name": "pubDate",
               "value": "={{ $json.pubDate }}",
               "type": "string"
+            },
+            {
+              "id": "hours-old-calc-5",
+              "name": "hours_old",
+              "value": "={{ Math.floor((Date.now() - new Date($json.pubDate).getTime()) / (1000 * 60 * 60)) }}",
+              "type": "number"
             }
           ]
         },
@@ -1134,6 +1325,37 @@
       "typeVersion": 3.4,
       "position": [
         -816,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hours_old }}",
+              "rightValue": 48,
+              "operator": {
+                "operation": "smallerEqual",
+                "type": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-48h-nicenews",
+      "name": "Filter Last 48 Hours - Nice News",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -608,
         1120
       ]
     },
@@ -1171,6 +1393,12 @@
               "name": "pubDate",
               "value": "={{ $json.pubDate }}",
               "type": "string"
+            },
+            {
+              "id": "hours-old-calc-6",
+              "name": "hours_old",
+              "value": "={{ Math.floor((Date.now() - new Date($json.pubDate).getTime()) / (1000 * 60 * 60)) }}",
+              "type": "number"
             }
           ]
         },
@@ -1182,6 +1410,37 @@
       "typeVersion": 3.4,
       "position": [
         -816,
+        1328
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hours_old }}",
+              "rightValue": 48,
+              "operator": {
+                "operation": "smallerEqual",
+                "type": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-48h-epoch",
+      "name": "Filter Last 48 Hours - Epoch Times",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -608,
         1328
       ]
     },
@@ -1261,6 +1520,12 @@
               "name": "pubDate",
               "value": "={{ $json.pubDate }}",
               "type": "string"
+            },
+            {
+              "id": "hours-old-calc-7",
+              "name": "hours_old",
+              "value": "={{ Math.floor((Date.now() - new Date($json.pubDate).getTime()) / (1000 * 60 * 60)) }}",
+              "type": "number"
             }
           ]
         },
@@ -1272,6 +1537,37 @@
       "typeVersion": 3.4,
       "position": [
         -816,
+        1520
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hours_old }}",
+              "rightValue": 48,
+              "operator": {
+                "operation": "smallerEqual",
+                "type": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-48h-reasons",
+      "name": "Filter Last 48 Hours - Reasons to Be Cheerful",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -608,
         1520
       ]
     },
@@ -1309,6 +1605,12 @@
               "name": "pubDate",
               "value": "={{ $json.pubDate }}",
               "type": "string"
+            },
+            {
+              "id": "hours-old-calc-8",
+              "name": "hours_old",
+              "value": "={{ Math.floor((Date.now() - new Date($json.pubDate).getTime()) / (1000 * 60 * 60)) }}",
+              "type": "number"
             }
           ]
         },
@@ -1320,6 +1622,37 @@
       "typeVersion": 3.4,
       "position": [
         -816,
+        1728
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hours_old }}",
+              "rightValue": 48,
+              "operator": {
+                "operation": "smallerEqual",
+                "type": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-48h-yes",
+      "name": "Filter Last 48 Hours - YES! Magazine",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -608,
         1728
       ]
     },
@@ -1357,6 +1690,12 @@
               "name": "pubDate",
               "value": "={{ $json.pubDate }}",
               "type": "string"
+            },
+            {
+              "id": "hours-old-calc-9",
+              "name": "hours_old",
+              "value": "={{ Math.floor((Date.now() - new Date($json.pubDate).getTime()) / (1000 * 60 * 60)) }}",
+              "type": "number"
             }
           ]
         },
@@ -1368,6 +1707,37 @@
       "typeVersion": 3.4,
       "position": [
         -816,
+        1920
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.hours_old }}",
+              "rightValue": 48,
+              "operator": {
+                "operation": "smallerEqual",
+                "type": "number"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "filter-48h-notall",
+      "name": "Filter Last 48 Hours - Not All News is Bad",
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2,
+      "position": [
+        -608,
         1920
       ]
     },
@@ -1412,6 +1782,19 @@
         -1216,
         1920
       ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get the selected story details\nconst selectedStory = $input.first().json.output;\nconst selectedTitle = selectedStory.title;\nconst selectedSummary = selectedStory.summary;\nconst storyNumber = selectedStory.story_number;\n\n// Get the original stories from the Format Stories node\nconst formatStoriesData = $('Format Stories for Prompt').first().json;\nconst originalStories = formatStoriesData.promptText;\n\n// Parse the original stories to extract individual stories\nconst storyBlocks = originalStories.split('\\n\\n').filter(block => block.trim().startsWith('Story '));\n\nlet verificationResult = {\n  story_exists: false,\n  title_match: false,\n  summary_match: false,\n  story_found: null,\n  verification_status: 'failed',\n  error_message: ''\n};\n\ntry {\n  // Find the story by number\n  const targetStoryBlock = storyBlocks.find(block => {\n    const storyNumMatch = block.match(/^Story (\\d+):/);\n    return storyNumMatch && parseInt(storyNumMatch[1]) === storyNumber;\n  });\n\n  if (targetStoryBlock) {\n    verificationResult.story_exists = true;\n    verificationResult.story_found = targetStoryBlock;\n    \n    // Extract title and summary from the found story\n    const titleMatch = targetStoryBlock.match(/Title: ([^\\n]+)/);\n    const summaryMatch = targetStoryBlock.match(/Summary: ([^\\n]+)/);\n    \n    const originalTitle = titleMatch ? titleMatch[1].trim() : '';\n    const originalSummary = summaryMatch ? summaryMatch[1].trim() : '';\n    \n    // Check if titles match (allowing for minor variations)\n    const titleSimilarity = selectedTitle.toLowerCase().trim() === originalTitle.toLowerCase().trim();\n    const summaryContains = originalSummary.toLowerCase().includes(selectedSummary.toLowerCase().substring(0, 100));\n    \n    verificationResult.title_match = titleSimilarity;\n    verificationResult.summary_match = summaryContains || selectedSummary.toLowerCase().includes(originalSummary.toLowerCase().substring(0, 100));\n    \n    if (verificationResult.title_match && verificationResult.summary_match) {\n      verificationResult.verification_status = 'passed';\n    } else {\n      verificationResult.verification_status = 'partial';\n      verificationResult.error_message = `Title match: ${verificationResult.title_match}, Summary match: ${verificationResult.summary_match}`;\n    }\n  } else {\n    verificationResult.error_message = `Story ${storyNumber} not found in original list`;\n  }\n} catch (error) {\n  verificationResult.error_message = `Verification error: ${error.message}`;\n}\n\n// Return the original selected story data with verification results\nreturn [{\n  json: {\n    ...selectedStory,\n    verification: verificationResult\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1456,
+        2224
+      ],
+      "id": "verify-story-selection",
+      "name": "Verify Story Selection"
     },
     {
       "parameters": {
@@ -1534,6 +1917,17 @@
       ]
     },
     "Select Story": {
+      "main": [
+        [
+          {
+            "node": "Verify Story Selection",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Story Selection": {
       "main": [
         [
           {
@@ -1867,6 +2261,17 @@
       "main": [
         [
           {
+            "node": "Filter Last 48 Hours - GNN",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Last 48 Hours - GNN": {
+      "main": [
+        [
+          {
             "node": "Merge Stories",
             "type": "main",
             "index": 0
@@ -1875,6 +2280,17 @@
       ]
     },
     "Set RSS Fields1": {
+      "main": [
+        [
+          {
+            "node": "Filter Last 48 Hours - Positive News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Last 48 Hours - Positive News": {
       "main": [
         [
           {
@@ -1911,6 +2327,17 @@
       "main": [
         [
           {
+            "node": "Filter Last 48 Hours - Sunny Skyz",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Last 48 Hours - Sunny Skyz": {
+      "main": [
+        [
+          {
             "node": "Merge Stories",
             "type": "main",
             "index": 2
@@ -1919,6 +2346,17 @@
       ]
     },
     "Set RSS Fields3": {
+      "main": [
+        [
+          {
+            "node": "Filter Last 48 Hours - Optimist Daily",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Last 48 Hours - Optimist Daily": {
       "main": [
         [
           {
@@ -1933,6 +2371,17 @@
       "main": [
         [
           {
+            "node": "Filter Last 48 Hours - Good Good Good",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Last 48 Hours - Good Good Good": {
+      "main": [
+        [
+          {
             "node": "Merge Stories",
             "type": "main",
             "index": 4
@@ -1944,6 +2393,17 @@
       "main": [
         [
           {
+            "node": "Filter Last 48 Hours - Nice News",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Last 48 Hours - Nice News": {
+      "main": [
+        [
+          {
             "node": "Merge Stories",
             "type": "main",
             "index": 5
@@ -1952,6 +2412,17 @@
       ]
     },
     "Set RSS Fields6": {
+      "main": [
+        [
+          {
+            "node": "Filter Last 48 Hours - Epoch Times",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Last 48 Hours - Epoch Times": {
       "main": [
         [
           {
@@ -2054,7 +2525,7 @@
       "main": [
         [
           {
-            "node": "Set RSS Fields9",
+            "node": "Limit News Stories9",
             "type": "main",
             "index": 0
           }
@@ -2062,6 +2533,17 @@
       ]
     },
     "Set RSS Fields7": {
+      "main": [
+        [
+          {
+            "node": "Filter Last 48 Hours - Reasons to Be Cheerful",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Last 48 Hours - Reasons to Be Cheerful": {
       "main": [
         [
           {
@@ -2076,6 +2558,17 @@
       "main": [
         [
           {
+            "node": "Filter Last 48 Hours - YES! Magazine",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Last 48 Hours - YES! Magazine": {
+      "main": [
+        [
+          {
             "node": "Merge Stories",
             "type": "main",
             "index": 8
@@ -2084,6 +2577,17 @@
       ]
     },
     "Set RSS Fields9": {
+      "main": [
+        [
+          {
+            "node": "Filter Last 48 Hours - Not All News is Bad",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter Last 48 Hours - Not All News is Bad": {
       "main": [
         [
           {
