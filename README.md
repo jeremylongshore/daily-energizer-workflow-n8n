@@ -1,45 +1,38 @@
 # Daily Energizer Workflow
 
-N8N workflow for generating daily inspirational articles from positive news sources.
+N8N workflow automation for generating daily inspirational articles from positive news RSS feeds with comprehensive anti-hallucination measures.
 
-## Version History
+## Overview
 
-### Main Branch
-- Original workflow v2 (baseline)
+The Daily Energizer workflow fetches positive news from 10 RSS feeds, selects the most inspiring story, and generates an uplifting article. It includes a 4-layer anti-hallucination system to ensure all content is real and traceable.
 
-### Feature Branches
+## Quick Start
 
-#### fix-1-date-filtering
-- Adds date filtering nodes to enforce 48-hour limit on RSS feed stories
-- Filters out old stories before selection
+```bash
+# Import workflow into N8N
+n8n import:workflow --input=daily-energizer-workflow.json
 
-#### fix-2-verification-node  
-- Adds verification node after story selection
-- Validates selected story exists in original list
-- Prevents hallucinations
+# Execute workflow (requires workflow ID from N8N)
+n8n execute --id=[workflow-id]
+```
 
-#### fix-3-llm-prompts
-- Strengthens LLM prompts with anti-hallucination rules
-- Updates prompt structure for better compliance
+## Key Features
 
-#### fix-4-temperature-zero
-- Sets all LLM temperature settings to 0
-- Ensures deterministic output
+- **10 Positive News Sources**: Curated RSS feeds for uplifting content
+- **48-Hour Freshness**: Only processes recent stories
+- **Anti-Hallucination System**: 4 layers of protection against fabricated content
+- **Temperature Zero**: Deterministic LLM output
+- **Story Verification**: Cross-references selected stories with source
 
-#### fix-5-all-combined
-- Combines all fixes into one branch
-- Full implementation of all anti-hallucination measures
+## Documentation
 
-## Testing Instructions
+- `CLAUDE.md` - Guidance for Claude Code when working with this repository
+- `IMPLEMENTATION-GUIDE.md` - Complete technical documentation and implementation history
+- `BRENT-ACTION-PLAN.md` - Current client requirements for source tracking and scoring visibility
 
-1. Checkout the branch you want to test
-2. Import the workflow JSON into n8n
-3. Run the workflow and verify:
-   - Stories are < 48 hours old
-   - Selected story matches source
-   - No hallucinated content
+## Workflow File
 
-## Files
-
-- `daily-energizer-workflow.json` - The n8n workflow file
-- Branch-specific versions with incremental fixes
+- `daily-energizer-workflow.json` - The complete N8N workflow (70 nodes, 78KB)
+  - Import directly into N8N platform
+  - Contains all anti-hallucination measures
+  - Fully implemented and tested
