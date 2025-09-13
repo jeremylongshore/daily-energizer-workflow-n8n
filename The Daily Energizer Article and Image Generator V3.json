@@ -1,0 +1,2514 @@
+{
+  "name": "The Daily Energizer Article and Image Generator V3",
+  "nodes": [
+    {
+      "parameters": {
+        "fieldToSplitOut": "results",
+        "options": {}
+      },
+      "id": "7e7dddb4-4374-42e6-9a37-ee48d2ccaf0c",
+      "name": "Split Tavily Items",
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -1312,
+        -48
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "5f35391f-b085-4640-93e9-98787cf342c7",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "334ea53f-8318-44dd-8da1-de4b6f625a93",
+              "name": "summary",
+              "value": "={{ $json.raw_content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2384d6ba-0b13-4ab0-98df-90b12228e0dd",
+      "name": "Set Tavily Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1088,
+        -48
+      ],
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "title",
+        "options": {}
+      },
+      "id": "3e8c99ce-4364-48ee-8ca1-47f20bd40a39",
+      "name": "Remove Duplicates",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 1,
+      "position": [
+        -640,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "functionCode": "const stories = $input.all().map(item => item.json);\n\n  // Format stories for the prompt\n const formatted = stories.map((story, index) => {\n    const hoursOld = story.hours_old || 'Unknown';\n    const source = story.source || 'Unknown Source';\n    return `Story ${index + 1}:\n    Title: ${story.title}\n    Summary: ${story.summary}\n    Published: ${story.pubDate}\n    Hours Old: ${hoursOld}\n    Source: ${source}`;\n  }).join('\\n\\n');\n\n  return [{\n    json: {\n      stories: stories,\n      promptText: formatted,\n      storyCount: stories.length,\n      timestamp: new Date().toISOString()\n    }\n  }]"
+      },
+      "id": "c9f49246-3228-4606-aec7-fbc72af56e68",
+      "name": "Combine Stories",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [
+        -416,
+        1024
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1984,
+        1024
+      ],
+      "id": "3c1ba7e1-7ba0-4a47-b337-61f82a1cb20c"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=CRITICAL ANTI-HALLUCINATION AND OUTPUT REQUIREMENTS:\n\nYOU MUST FOLLOW THESE RULES OR THE SYSTEM WILL FAIL:\n1. You can ONLY select a story that is EXACTLY in the provided list\n2. You CANNOT create, modify, or reword ANY part of any story\n3. You MUST copy the title and summary EXACTLY as provided\n4. You MUST verify the story is less than 48 hours old\n5. You MUST output ONLY valid JSON with no additional text\n6. You MUST score ALL stories, not just the selected one\n\nCOMPREHENSIVE SCORING PROCESS:\nStep 1: Read each story carefully\nStep 2: Score EVERY story on ALL three criteria (even if >48 hours old):\n   - Emotional Impact (1-5): How uplifting and inspiring?\n   - Global Relevance (1-5): Universal appeal across cultures?\n   - Specificity (1-5): Concrete details, names, places?\nStep 3: Calculate total score for each story (sum of 3 criteria)\nStep 4: Mark eligibility: true if <=48 hours old, false if older\nStep 5: Select the ELIGIBLE story with highest total score\nStep 6: Copy EXACT titles, summaries, and sources for ALL stories\n\nStories to Evaluate:\n{{ $json.promptText }}\n\nOUTPUT ONLY THIS EXACT JSON STRUCTURE (no text before or after):\n{\n  \"selected_story\": {\n    \"title\": \"[exact title from the list]\",\n    \"summary\": \"[exact summary from the list]\",\n    \"source\": \"[exact source from the list]\",\n    \"story_number\": [number],\n    \"hours_old\": [number],\n    \"emotional_impact\": [1-5],\n    \"global_relevance\": [1-5],\n    \"specificity\": [1-5],\n    \"total_score\": [sum of 3 scores],\n    \"verification\": \"confirmed_from_list\"\n  },\n  \"selection_reason\": \"[one sentence explaining why this story scored highest among eligible stories]\",\n  \"all_stories_scoring\": [\n    {\n      \"story_number\": [number],\n      \"title\": \"[exact title]\",\n      \"source\": \"[exact source]\",\n      \"emotional_impact\": [1-5],\n      \"global_relevance\": [1-5],\n      \"specificity\": [1-5],\n      \"total_score\": [sum],\n      \"hours_old\": [number],\n      \"eligible\": [true/false]\n    }\n  ]\n}\n\nCRITICAL REMINDERS:\n- Output ONLY the JSON object above - no explanations\n- Include scoring for EVERY story in all_stories_scoring\n- Copy titles, summaries, and sources EXACTLY as provided (do NOT add HTML, tags, or escape sequences)\n- Replace bracketed placeholders with actual values\n- Ensure all string values are in quotes\n- Ensure all number values are NOT in quotes\n- Ensure the entire object parses correctly as JSON with no truncation\n- Any hallucination or invalid formatting will cause system failure",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "= You are an AI assistant for \"The Daily Energizer\" with STRICT JSON output requirements.\n\nCRITICAL OUTPUT RULES:\n1. You MUST output ONLY valid JSON - no text before or after\n2. You MUST include ALL required fields exactly as specified\n3. You MUST NOT add any markdown formatting (no ```json blocks)\n4. You MUST ensure proper JSON syntax with correct quotes and commas\n5. You MUST escape all quotes correctly (use \\\" not \\“ or \\”)\n6. You MUST provide complete JSON with no truncation\n7. You MUST score EVERY story in the provided list\n\nYour response should be a single JSON object that can be directly parsed.\n\nREQUIRED JSON STRUCTURE:\n- selected_story: object with title, summary, source, story_number, hours_old, and all scores\n- selection_reason: string explaining why this story won\n- all_stories_scoring: array with scoring for EVERY story\n- Do NOT insert line breaks between keys and values. Always write `\"key\": \"value\"` on one line.\n- Close all arrays and objects properly. Output must end with `]}`.\n\nRemember: Output ONLY the JSON object. No explanations, no formatting, just pure JSON.\n\nYou MUST return a valid JSON object, not a JSON string inside a field.\n\n"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        -192,
+        1024
+      ],
+      "id": "2500e0de-1131-449d-b151-602295afc16a",
+      "name": "Select Story",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=  IMPORTANT: You are writing about a REAL news story {{ $('Select Story').item.json.output.selected_story.summary }}, that happened {{ $('Select Story').item.json.output.selected_story.hours_old }} hours ago.\n  \nDo NOT embellish or add details not in the provided summary.\n\nUse ONLY the information provided in the story summary.\n\n  Selected Story (VERIFIED REAL):\n  Title: {{ $('Select Story').item.json.output.selected_story.title }}\n  Summary: {{ $('Select Story').item.json.output.selected_story.summary }}\n  Published: {{ $('Select Story').item.json.output.selected_story.hours_old }} hours ago\n  Verification: {{ $('Select Story').item.json.output.selected_story.verification }}\n\nNow, using the above story, write the full Daily Energizer article (650-750 words max). Please follow the required section structure and tone guidelines to create one of the most uplifting, super-charged, inspiring and energizing articles ever!\n\nDon't ever use emojis!",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an AI writer for \"The Daily Energizer,\" a globally-read daily super-energizing inspiration newsletter. Each day you write a full-length inspirational article (650-750 words max) based on a chosen uplifting news story and additional motivational content. The audience is billions of diverse readers around the world.\n\nAlways, always, always conclude with the exact signature sentence (including the link): To infuse your days with even more positivity and high energy, visit http://TheDailyEnergizer.com for a special dose of upliftment and motivation to jumpstart your day!\n\nArticle Structure (use these sections in the following order but do not include the actual section header text and don't ever use emojis):\n\n- Warm Greeting — Start with a warm, cheerful greeting to welcome the reader and set a positive tone. Be brief, upbeat, perky and super high energy!\n\n- Living Universe — In 50 to 100 words max, without preaching, very briefly remind the audience that when living in an infinite universe where anything and everything is possible, it is illogical and even irresponsible to be pessimistic. **ALWAYS** say it is illogical to be pessimistic in an infinite universe. This part should be 50 to 100 words MAXIMUM.\n\n- Uplifting News Story — In 150 to 200 words, present the provided news story in a brief yet uplifting way, highlighting why it’s inspiring and how it encourages people. The story should be 150-200 words max. This part should be 150 to 200 words MAXIMUM.\n\n- We Are Super Beings — Always include the following paragraph: \"Inside you rages a symphony of trillions — more beings live within you than there are stars in the Milky Way! With every breath you take and every move you make, an invisible civilization of bacteria, viruses, fungi, and microscopic allies surges alongside you, defending you, evolving you, becoming you! You are not a single life; you are a universe stitched into human form, a galactic Voltron powered by life itself! Your gut alone holds more life than all humanity combined, your skin glows with hidden cities, and your breath carries unseen armies across the air! You are a living miracle — a Super Being — a multiverse in motion, a cosmic symphony of unity and unstoppable energy! You are not alone — stand tall, feel the power that breathes within you, and unleash your inner Super Being today!\". \n\n- Friendly Closing Line — End with a warm, brief, encouraging closing remark that makes the reader feel appreciated, hopeful, inspired and super energized! Energize and inspire people so they feel the power of a trillion suns!\n\n- Final Signature Line — Always, always, always conclude with the exact signature sentence (including the link): To infuse your days with even more positivity and high energy, visit http://TheDailyEnergizer.com for a special dose of upliftment and motivation to jumpstart your day!\n\n- Do NOT include header text such as \"Warm Greeting\", \"Living Universe\", \"Uplifting News Story\", \"We Are Super Beings\", \"Friendly Closing Line\" or \"Final Signature Line\".\n\nTone and Style:\n- Write with legendary warmth, brevity, optimism, and emotional intelligence, as if speaking to a dear friend. Be super optimistic and extremely high energy that is off the charts with energy and enthusiasm! \n\n- Use clear, simple language (no complex jargon), so readers from all cultures and English proficiency levels can understand and feel included.\n\n- Make every reader feel seen and capable: use inclusive language (e.g., \"wherever you are,\" \"no matter who you are\") and encourage the reader’s potential.\n\n- Maintain a concise voice that transcends borders – avoid culture-specific references or slang; focus on universal values and themes.\n\n- Keep the overall mood extremely inspiring, empowering, and super energizing. The article should leave readers feeling hopeful, motivated, and extremely excited about the day ahead.\n\nFollow the above structure and tone guidelines closely. Incorporate the provided news story details into the Uplifting News Story section. Ensure the news story is only 150-200 words max and the entire article flows naturally. Aim to make the piece brief yet truly uplifting and energizing, brightening the reader’s morning and mindset.\n\nWhen composing the final article, make sure to incorporate and elaborate on all available specific details from the selected story. This includes any information about the location (city, state and country if possible), the full names of individuals (if provided), and key aspects of the event to create a vivid, meaningful, and engaging narrative that truly inspires and energizes readers. Don't ever use emojis. The news story itself should never be more 150-200 words max."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        608,
+        1024
+      ],
+      "id": "adb03a05-9dcd-4b22-af68-b6210c52748d",
+      "name": "Write Article"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={\n    \"api_key\": \"{{ $json.api_key }}\",\n    \"topic\": \"news\",\n    \"days\": \"2\",\n    \"query\": \"inspiring positive news story OR breakthrough heroic act OR unity OR breakthrough invention OR kindness OR large-scale collaboration OR medical milestone\",\n    \"search_depth\": \"advanced\",\n    \"include_answer\": true,\n    \"include_images\": true,\n    \"include_image_descriptions\": true,\n    \"include_raw_content\": true,\n    \"max_results\": 100,\n    \"include_domains\": [],\n    \"exclude_domains\": []\n}\n\n",
+        "options": {}
+      },
+      "id": "581a2d0f-0891-4747-82c0-61e8ccea0c55",
+      "name": "Tavily Search Topic",
+      "type": "n8n-nodes-base.httpRequest",
+      "position": [
+        -1536,
+        -48
+      ],
+      "typeVersion": 4.2,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "035660a9-bb58-4ecb-bad3-7f4d017fa69f",
+              "name": "api_key",
+              "type": "string",
+              "value": "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"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "d4b5a8f7-e000-4a19-bf73-dec0b6e58337",
+      "name": "Tavily API Key",
+      "type": "n8n-nodes-base.set",
+      "position": [
+        -1760,
+        -48
+      ],
+      "typeVersion": 3.4,
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxTokens": 1000
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        688,
+        1184
+      ],
+      "id": "6335a2ea-c636-49f3-aa7f-512b69d2156b",
+      "name": "Gpt4o-mini 2",
+      "credentials": {
+        "openRouterApi": {
+          "id": "NPxFdMwxFMJAvlFj",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "image",
+        "prompt": "=lightning bolts, high energy, vitality, enthusiasm, jumping up with joy, energy, smile, smiling, sunshine, energy, bright, electricity {{ $json['Story Centered Summary'] }}",
+        "options": {
+          "size": "1024x1024",
+          "style": "vivid",
+          "returnImageUrls": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.openAi",
+      "typeVersion": 1.8,
+      "position": [
+        2208,
+        1024
+      ],
+      "id": "d2112e22-c623-44ac-b7b3-9df13fdd7b23",
+      "name": "Request Image (DALL-E)",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "openAiApi": {
+          "id": "a42DQQjL7xXBpB7y",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "name": "=",
+        "driveId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "My Drive"
+        },
+        "folderId": {
+          "__rl": true,
+          "value": "1UedL7m70d3gNOERAoQtGIcEPOdTPTLHy",
+          "mode": "list",
+          "cachedResultName": "TDE Images",
+          "cachedResultUrl": "https://drive.google.com/drive/folders/1UedL7m70d3gNOERAoQtGIcEPOdTPTLHy"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        2432,
+        1024
+      ],
+      "id": "0e449734-964d-4cab-af59-086ec939f304",
+      "name": "Store DALL-E Image on Google Drive",
+      "retryOnFail": true,
+      "maxTries": 5,
+      "waitBetweenTries": 5000,
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "SwHM3vhZ5XSHFQjz",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// This function expects that the previous node output contains the shareable URL in a field, e.g. \"imageUrl\".\nconst shareableUrl = $input.first().json.webViewLink; // Adjust the field name if necessary\n\n// Extract the file ID from the shareable URL.\nlet fileId = \"\";\nconst match = shareableUrl.match(/\\/d\\/([^\\/]+)/);\nif (match && match[1]) {\n    fileId = match[1];\n}\n\n// Build the direct URL if a file ID is found.\nif (fileId) {\n    items[0].json.directImageUrl = `https://drive.google.com/uc?export=view&id=${fileId}`;\n} else {\n    // Fallback: use the original URL if no file ID was extracted.\n    items[0].json.directImageUrl = shareableUrl;\n}\n\nreturn items;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2656,
+        1024
+      ],
+      "id": "92faddf6-9a84-444b-a9f6-e2f95abbc541",
+      "name": "Transform Shareable URL to Direct URL"
+    },
+    {
+      "parameters": {
+        "content": "# V3! The Daily Energizer Article and Image Generator (to generate a new article, Review Status must be blank)",
+        "height": 100,
+        "width": 1860,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -704,
+        -32
+      ],
+      "id": "f9a4cec3-9e8c-4218-9ff9-e984b8e7c989",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "jsCode": "const input = $json[\"text\"] || $json[\"text\"] || \"\";  // Match your actual field name\nconst finalLine = \"To infuse your days with even more positivity and high energy, visit http://TheDailyEnergizer.com for a special dose of upliftment and motivation to jumpstart your day!\";\nconst maxLength = 3000;\n\nlet cleaned = input.trim();\n\n// If it's already there, just trim to max\nif (cleaned.includes(\"https://WCN.One\")) {\n  return {\n    json: {\n      content: cleaned.length > maxLength ? cleaned.slice(0, maxLength).trim() : cleaned\n    }\n  };\n}\n\n// Reserve space for final line + line breaks\nconst reservedSpace = finalLine.length + 2; // +2 for line breaks\nconst allowedLength = maxLength - reservedSpace;\n\n// Trim the main content\nlet trimmed = cleaned.slice(0, allowedLength).trim();\n\n// Add final line\nconst full = trimmed + \"\\n\\n\" + finalLine;\n\nreturn {\n  json: {\n    content: full\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        960,
+        1024
+      ],
+      "id": "ff7f7c33-d858-4da3-b817-41e5691bdf50",
+      "name": "Ensure Final Line is Included"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "335e0f24-6149-41f3-bfbc-42eb9c1683e2",
+              "name": "Article",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1184,
+        1024
+      ],
+      "id": "89297f68-9f22-464d-8fe0-27b445fcacdf",
+      "name": "Set Article Text"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Get all input items\nconst items = $input.all();\n\n// Find the maximum row number\nlet maxRowNumber = -Infinity;\nlet maxItem = null;\n\nfor (const item of items) {\n  const rowNumber = item.json.row_number;\n  if (rowNumber > maxRowNumber) {\n    maxRowNumber = rowNumber;\n    maxItem = item;\n  }\n}\n\n// Return the item with the maximum row number\nreturn maxItem ? [maxItem] : [];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3328,
+        1024
+      ],
+      "id": "8e7a48ba-a4b5-4481-9c51-7827915733c6",
+      "name": "Get the Row Number For Formula"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "1Hlb3ouO2WYZjvhlHsda2LHH2puKHZGBLo0emK6orx5U",
+          "mode": "list",
+          "cachedResultName": "The Daily Energizer",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Hlb3ouO2WYZjvhlHsda2LHH2puKHZGBLo0emK6orx5U/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Articles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Hlb3ouO2WYZjvhlHsda2LHH2puKHZGBLo0emK6orx5U/edit#gid=0"
+        },
+        "filtersUI": {
+          "values": [
+            {
+              "lookupColumn": "Article Text",
+              "lookupValue": "={{ $('Add Article and Story Centered Summary to Sheet').item.json['Article Text'] }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3104,
+        1024
+      ],
+      "id": "365ef124-9764-4f5f-992c-b9e042173ad9",
+      "name": "Get Row Number for Newly Added Row in Daily Article",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MAIRVJi1azWMirbq",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxTokens": 500
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        1488,
+        1184
+      ],
+      "id": "1ae71c67-6ed1-4486-8d9d-a911d65c6f37",
+      "name": "Gpt4o-mini ",
+      "credentials": {
+        "openRouterApi": {
+          "id": "NPxFdMwxFMJAvlFj",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.Article }}\n\nNow, using the above story, write a summary of the the full Daily Energizer article WITHOUT the references to the infinite universe, daily practices, or microorganisms that live inside us. The story should be 200-300 words max. Create one of the most uplifting, super-charged, inspiring and energizing summaries ever!\n\nDon't ever use emojis!",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "You are an AI summary writer for \"The Daily Energizer,\" a globally-read daily super-energizing inspiration newsletter. Each day you write a summary of the the full Daily Energizer article that focuses on the community-based story, WITHOUT the references to the infinite universe, daily practices or the microorganisms that live inside us (the summary should be 200-300 words max). Create one of the most uplifting, super-charged, inspiring and energizing summaries ever! The audience is billions of diverse readers around the world.\n\nTone and Style:\n- Write with legendary warmth, optimism, and emotional intelligence, as if speaking to a dear friend. Be super optimistic and extremely high energy that is off the charts with energy and enthusiasm!\n\n- Use clear, simple language (no complex jargon), so readers from all cultures and English proficiency levels can understand and feel included. \n\n- Make every reader feel seen and capable: use inclusive language (e.g., \"wherever you are,\" \"no matter who you are\") and encourage the reader’s potential.\n\n- Maintain a concise voice that transcends borders – avoid culture-specific references or slang; focus on universal values and themes.\n\n- Keep the overall mood extremely inspiring, empowering, and super energizing. The article should leave readers feeling hopeful, motivated, and extremely excited about the day ahead."
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        1408,
+        1024
+      ],
+      "id": "2de7c96b-6c9d-4e9a-8014-462ae265367d",
+      "name": "Write Story-Centered Summary"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "335e0f24-6149-41f3-bfbc-42eb9c1683e2",
+              "name": "Story-Centered Summary",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1760,
+        1024
+      ],
+      "id": "0aa3198e-389e-49a8-998c-5a42fb39cf6e",
+      "name": "Set Story-Centered Summary Text"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1Hlb3ouO2WYZjvhlHsda2LHH2puKHZGBLo0emK6orx5U",
+          "mode": "list",
+          "cachedResultName": "The Daily Energizer",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Hlb3ouO2WYZjvhlHsda2LHH2puKHZGBLo0emK6orx5U/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Articles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Hlb3ouO2WYZjvhlHsda2LHH2puKHZGBLo0emK6orx5U/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Article Text": "={{ $('Set Article Text').item.json.Article }}",
+            "Story Centered Summary": "={{ $('Set Story-Centered Summary Text').item.json['Story-Centered Summary'] }}",
+            "Source": "={{ $('Select Story').item.json.output.selected_story.source }}",
+            "Emotional Impact Score": "={{ $('Select Story').item.json.output.selected_story.emotional_impact }}",
+            "Global Relevance Score": "={{ $('Select Story').item.json.output.selected_story.global_relevance }}",
+            "Specificity Score": "={{ $('Select Story').item.json.output.selected_story.specificity }}",
+            "Total Score": "={{ $('Select Story').item.json.output.selected_story.total_score }}",
+            "Selection Reason": "={{ $('Select Story').item.json.output.selection_reason }}"
+          },
+          "matchingColumns": [
+            "Article #"
+          ],
+          "schema": [
+            {
+              "id": "Article #",
+              "displayName": "Article #",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Article Text",
+              "displayName": "Article Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "DalleURL",
+              "displayName": "DalleURL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ImagePreview",
+              "displayName": "ImagePreview",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Review Status",
+              "displayName": "Review Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Broadcast Status",
+              "displayName": "Broadcast Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ThumbURL",
+              "displayName": "ThumbURL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Story Centered Summary",
+              "displayName": "Story Centered Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Source",
+              "displayName": "Source",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Emotional Impact Score",
+              "displayName": "Emotional Impact Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Global Relevance Score",
+              "displayName": "Global Relevance Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Specificity Score",
+              "displayName": "Specificity Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Total Score",
+              "displayName": "Total Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Selection Reason",
+              "displayName": "Selection Reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "All Stories Count",
+              "displayName": "All Stories Count",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "All Stories Scoring",
+              "displayName": "All Stories Scoring",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        1984,
+        1024
+      ],
+      "id": "ce25c466-f7b5-4fca-a248-dcccb8c07255",
+      "name": "Add Article and Story Centered Summary to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MAIRVJi1azWMirbq",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b6225615-0425-42d3-845b-b10bcac32f42",
+              "name": "DirectImageURL",
+              "value": "={{ $json.directImageUrl }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        2880,
+        1024
+      ],
+      "id": "ffaab5b1-38bd-4007-95bd-4291cacbeb41",
+      "name": "Set Image URL Fields"
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1Hlb3ouO2WYZjvhlHsda2LHH2puKHZGBLo0emK6orx5U",
+          "mode": "list",
+          "cachedResultName": "The Daily Energizer",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Hlb3ouO2WYZjvhlHsda2LHH2puKHZGBLo0emK6orx5U/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Articles",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1Hlb3ouO2WYZjvhlHsda2LHH2puKHZGBLo0emK6orx5U/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Article Text": "={{ $json['Article Text'] }}",
+            "ImagePreview": "==image(C{{ $('Get the Row Number For Formula').item.json.row_number }})",
+            "Review Status": "Pending Approval",
+            "DalleURL": "={{ $('Set Image URL Fields').item.json.DirectImageURL }}"
+          },
+          "matchingColumns": [
+            "Article Text"
+          ],
+          "schema": [
+            {
+              "id": "Article #",
+              "displayName": "Article #",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Article Text",
+              "displayName": "Article Text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "DalleURL",
+              "displayName": "DalleURL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "ImagePreview",
+              "displayName": "ImagePreview",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Review Status",
+              "displayName": "Review Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Broadcast Status",
+              "displayName": "Broadcast Status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "ThumbURL",
+              "displayName": "ThumbURL",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "Story Centered Summary",
+              "displayName": "Story Centered Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [
+        3552,
+        1024
+      ],
+      "id": "c25ba35d-aa57-4f67-9f21-61853314478b",
+      "name": "Update Status, Image URL and Image Preview Formula to Sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "MAIRVJi1azWMirbq",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "numberInputs": 10
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -864,
+        896
+      ],
+      "id": "73b5ba8d-078d-4fae-a234-82c70db75426",
+      "name": "Merge Stories"
+    },
+    {
+      "parameters": {
+        "url": "https://www.positive.news/feed/",
+        "options": {}
+      },
+      "id": "53e64567-6cc4-4a0b-824c-f932ce72d520",
+      "name": "Positive News UK",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.goodnewsnetwork.org/feed/",
+        "options": {}
+      },
+      "id": "e4d77775-d83e-43b5-892a-cc21c38798cb",
+      "name": "Good News Network",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://feeds.feedburner.com/SunnySkyz",
+        "options": {}
+      },
+      "id": "881595ff-f352-45d5-a2c1-95daea267310",
+      "name": "Sunny Skyz",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.optimistdaily.com/feed/",
+        "options": {}
+      },
+      "id": "ac615d77-65d1-4226-b9ed-d0602cf2e359",
+      "name": "The Optimist Daily",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 100
+      },
+      "id": "3607dd86-a4f8-4851-8d38-643fbe68fbb8",
+      "name": "Limit News Stories1",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 100
+      },
+      "id": "7d30d5fe-ca74-4f3a-b80d-cbf406956bb2",
+      "name": "Limit News Stories",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 100
+      },
+      "id": "888f3257-892b-48c2-8d0e-33f28093f018",
+      "name": "Limit News Stories2",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 100
+      },
+      "id": "0dcfd6a2-db3b-4356-adce-780bf0929c30",
+      "name": "Limit News Stories3",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 100
+      },
+      "id": "a194c828-742a-4ce8-bb97-bc9e70acde8e",
+      "name": "Limit News Stories4",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c61f7086-4d39-46a2-a542-1639b9c83bc8",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "d335bd07-9661-46f9-883a-0299a9607beb",
+              "name": "summary",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "32dd041e-adc1-42eb-b060-628be80a2864",
+              "name": "pubDate",
+              "value": "={{ $json.pubDate }}",
+              "type": "string"
+            },
+            {
+              "id": "27652470-2e23-4eb7-be28-3de29df882d5",
+              "name": "source",
+              "value": "Good News Network",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a283c654-c1d9-4705-b231-ba21c052a365",
+      "name": "Set RSS Fields",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        160
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c61f7086-4d39-46a2-a542-1639b9c83bc8",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "d335bd07-9661-46f9-883a-0299a9607beb",
+              "name": "summary",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "b7c09786-50b6-458b-a354-d5776c864e94",
+              "name": "pubDate",
+              "value": "={{ $json.pubDate }}",
+              "type": "string"
+            },
+            {
+              "id": "5c2c3018-0000-4eee-8cd2-962edea456df",
+              "name": "source",
+              "value": "Positive News UK",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "465d6b2e-762e-488d-8265-baa19eae5c7c",
+      "name": "Set RSS Fields1",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        352
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c61f7086-4d39-46a2-a542-1639b9c83bc8",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "d335bd07-9661-46f9-883a-0299a9607beb",
+              "name": "summary",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "afbc83aa-5698-4f82-a734-8f9617879389",
+              "name": "pubDate",
+              "value": "={{ $json.pubDate }}",
+              "type": "string"
+            },
+            {
+              "id": "e861f602-fc4e-4508-b3da-7207629fc786",
+              "name": "source",
+              "value": "Sunny Skyz",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "7b1433b0-44ce-4666-962e-ba56e063f1e7",
+      "name": "Set RSS Fields2",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        544
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c61f7086-4d39-46a2-a542-1639b9c83bc8",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "d335bd07-9661-46f9-883a-0299a9607beb",
+              "name": "summary",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "bd9eb9ee-89d3-4b29-a29f-d2a3623af159",
+              "name": "pubDate",
+              "value": "={{ $json.pubDate }}",
+              "type": "string"
+            },
+            {
+              "id": "8ea0b649-a1e6-48ae-93ba-a6755a7bf2f2",
+              "name": "source",
+              "value": "The Optimist Daily",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "42908ed3-dfd5-48e6-b6fb-3df6bc723f6c",
+      "name": "Set RSS Fields3",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        736
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c61f7086-4d39-46a2-a542-1639b9c83bc8",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "d335bd07-9661-46f9-883a-0299a9607beb",
+              "name": "summary",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "169aeef5-40d3-4023-828c-4763360dc37f",
+              "name": "pubDate",
+              "value": "={{ $json.pubDate }}",
+              "type": "string"
+            },
+            {
+              "id": "7efdadaf-c698-449a-b32d-39e65d4b9f7e",
+              "name": "source",
+              "value": "Good Good Good",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "829a15b7-a722-4545-af6a-15adba7f39cf",
+      "name": "Set RSS Fields4",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 100
+      },
+      "id": "902caab1-6b76-4b8d-9ca5-7ab0a603d8b5",
+      "name": "Limit News Stories5",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c61f7086-4d39-46a2-a542-1639b9c83bc8",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "d335bd07-9661-46f9-883a-0299a9607beb",
+              "name": "summary",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "20add6dd-4116-4c80-8294-34f14b84d925",
+              "name": "pubDate",
+              "value": "={{ $json.pubDate }}",
+              "type": "string"
+            },
+            {
+              "id": "598a9857-2f5d-4bf2-aae3-8593404a06c0",
+              "name": "source",
+              "value": "Nice News",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "be99d564-6277-4c76-b81b-ff8e36bb3dac",
+      "name": "Set RSS Fields5",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 100
+      },
+      "id": "e2b14b2f-af96-4f3d-8fbb-c189543f3898",
+      "name": "Limit News Stories6",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c61f7086-4d39-46a2-a542-1639b9c83bc8",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "d335bd07-9661-46f9-883a-0299a9607beb",
+              "name": "summary",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "bf34c721-f1ef-4c19-90ec-8fe5ab42d1d6",
+              "name": "pubDate",
+              "value": "={{ $json.pubDate }}",
+              "type": "string"
+            },
+            {
+              "id": "11b96657-1f71-4ca3-a34a-e7112f2d6596",
+              "name": "source",
+              "value": "Epoch Times Bright",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "308e0da5-d081-4847-b05f-93543d06acf5",
+      "name": "Set RSS Fields6",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.goodgoodgood.co/articles/rss.xml",
+        "options": {}
+      },
+      "id": "634a89ff-b02b-4eeb-b92c-5240cd14efab",
+      "name": "Good Good Good",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        928
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://nicenews.com/feed/",
+        "options": {}
+      },
+      "id": "e9fa8634-d773-4302-865f-fdaa4da1e983",
+      "name": "Nice News",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        1120
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.theepochtimes.com/bright/feed",
+        "options": {}
+      },
+      "id": "b55fa2c1-6879-4708-8f8b-b9ae4cac4fb0",
+      "name": "Epoch Times Bright",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        1312
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 100
+      },
+      "id": "ce3c0c9f-0026-4775-95b1-d2798c118885",
+      "name": "Limit News Stories7",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        1504
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c61f7086-4d39-46a2-a542-1639b9c83bc8",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "d335bd07-9661-46f9-883a-0299a9607beb",
+              "name": "summary",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "2e8b8787-e88b-405f-9cfd-8c33debf3477",
+              "name": "pubDate",
+              "value": "={{ $json.pubDate }}",
+              "type": "string"
+            },
+            {
+              "id": "0c16f4b2-82a7-45ea-9662-0182297e5ded",
+              "name": "source",
+              "value": "Reasons to Be Cheerful",
+              "type": "string"
+            },
+            {
+              "id": "31ae8349-3383-4c21-b0e5-348717f6d781",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "c6bdfd60-c049-439a-a65e-2daae975b338",
+      "name": "Set RSS Fields7",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        1504
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 100
+      },
+      "id": "c33da437-738b-4d6a-a004-3e8c60ed749e",
+      "name": "Limit News Stories8",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        1696
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c61f7086-4d39-46a2-a542-1639b9c83bc8",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "d335bd07-9661-46f9-883a-0299a9607beb",
+              "name": "summary",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "7eca5b3d-c902-48ad-aa60-04e8e0b1476f",
+              "name": "pubDate",
+              "value": "={{ $json.pubDate }}",
+              "type": "string"
+            },
+            {
+              "id": "ac0f62a5-22b9-4f64-8c8e-9764d141f04b",
+              "name": "source",
+              "value": "YES! Magazine",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "2b7fbc33-5af4-4259-a98d-0e87ac53edda",
+      "name": "Set RSS Fields8",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        1696
+      ]
+    },
+    {
+      "parameters": {
+        "maxItems": 100
+      },
+      "id": "94337465-097d-43d5-a511-724d9d4d1f48",
+      "name": "Limit News Stories9",
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        -1536,
+        1888
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "c61f7086-4d39-46a2-a542-1639b9c83bc8",
+              "name": "title",
+              "value": "={{ $json.title }}",
+              "type": "string"
+            },
+            {
+              "id": "d335bd07-9661-46f9-883a-0299a9607beb",
+              "name": "summary",
+              "value": "={{ $json.content }}",
+              "type": "string"
+            },
+            {
+              "id": "5fe6ca82-aedc-4754-8557-68c024a43d3b",
+              "name": "pubDate",
+              "value": "={{ $json.pubDate }}",
+              "type": "string"
+            },
+            {
+              "id": "2f502de9-ebb8-40ed-a02f-461644e13fb8",
+              "name": "source",
+              "value": "Not All News is Bad!",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "f5bd15a7-49f8-41fe-aea3-c1cd55be3885",
+      "name": "Set RSS Fields9",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1312,
+        1888
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://reasonstobecheerful.world/feed/",
+        "options": {}
+      },
+      "id": "74c79efe-4474-4596-a613-89fb63d85a0b",
+      "name": "Reasons to Be Cheerful",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        1504
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://www.yesmagazine.org/feed",
+        "options": {}
+      },
+      "id": "945e5762-72ba-4b13-b2e7-081f36fb3719",
+      "name": "YES! Magazine",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        1696
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://notallnewsisbad.com/feed/",
+        "options": {}
+      },
+      "id": "a53033a7-015b-4153-9735-1f8679fc6261",
+      "name": "Not All News is Bad!",
+      "type": "n8n-nodes-base.rssFeedRead",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        1888
+      ]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "de67da64-f02f-48d2-b2a9-68d01055eb28",
+              "name": "={{ $now }}",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "b5b84fab-1ed4-4975-955c-f3a77ab424f6",
+      "name": "Set Today's Date",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        384,
+        1024
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter stories to only include those from last 48 hours\nconst items = $input.all();\nconst fortyEightHoursAgo = new Date();\nfortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);\n\nconst filteredItems = items.filter(item => {\n  const storyDate = new Date(item.json.pubDate);\n  const isRecent = storyDate >= fortyEightHoursAgo;\n  \n  if (isRecent) {\n    // Add hours_old field for later use\n    const hoursOld = Math.round((new Date() - storyDate) / (1000 * 60 * 60));\n    item.json.hours_old = hoursOld;\n    return true;\n  }\n  return false;\n});\n\nconsole.log(`Filtered ${items.length} stories down to ${filteredItems.length} from last 48 hours`);\nreturn filteredItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        1696
+      ],
+      "id": "b0873b6e-bda5-48f4-b8a5-bfbece7111ef",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter stories to only include those from last 48 hours\nconst items = $input.all();\nconst fortyEightHoursAgo = new Date();\nfortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);\n\nconst filteredItems = items.filter(item => {\n  const storyDate = new Date(item.json.pubDate);\n  const isRecent = storyDate >= fortyEightHoursAgo;\n  \n  if (isRecent) {\n    // Add hours_old field for later use\n    const hoursOld = Math.round((new Date() - storyDate) / (1000 * 60 * 60));\n    item.json.hours_old = hoursOld;\n    return true;\n  }\n  return false;\n});\n\nconsole.log(`Filtered ${items.length} stories down to ${filteredItems.length} from last 48 hours`);\nreturn filteredItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        352
+      ],
+      "id": "b0e3aa1a-627a-4cd9-85bd-d35d27801eeb",
+      "name": "48 Hour Filter"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter stories to only include those from last 48 hours\nconst items = $input.all();\nconst fortyEightHoursAgo = new Date();\nfortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);\n\nconst filteredItems = items.filter(item => {\n  const storyDate = new Date(item.json.pubDate);\n  const isRecent = storyDate >= fortyEightHoursAgo;\n  \n  if (isRecent) {\n    // Add hours_old field for later use\n    const hoursOld = Math.round((new Date() - storyDate) / (1000 * 60 * 60));\n    item.json.hours_old = hoursOld;\n    return true;\n  }\n  return false;\n});\n\nconsole.log(`Filtered ${items.length} stories down to ${filteredItems.length} from last 48 hours`);\nreturn filteredItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        160
+      ],
+      "id": "f0187d5b-34e6-495a-9312-81c6bb0e2d2c",
+      "name": "48 Hour Filter1"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter stories to only include those from last 48 hours\nconst items = $input.all();\nconst fortyEightHoursAgo = new Date();\nfortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);\n\nconst filteredItems = items.filter(item => {\n  const storyDate = new Date(item.json.pubDate);\n  const isRecent = storyDate >= fortyEightHoursAgo;\n  \n  if (isRecent) {\n    // Add hours_old field for later use\n    const hoursOld = Math.round((new Date() - storyDate) / (1000 * 60 * 60));\n    item.json.hours_old = hoursOld;\n    return true;\n  }\n  return false;\n});\n\nconsole.log(`Filtered ${items.length} stories down to ${filteredItems.length} from last 48 hours`);\nreturn filteredItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        544
+      ],
+      "id": "1aa31d33-4239-49be-9106-b7ffd7f379b6",
+      "name": "48 Hour Filter2"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter stories to only include those from last 48 hours\nconst items = $input.all();\nconst fortyEightHoursAgo = new Date();\nfortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);\n\nconst filteredItems = items.filter(item => {\n  const storyDate = new Date(item.json.pubDate);\n  const isRecent = storyDate >= fortyEightHoursAgo;\n  \n  if (isRecent) {\n    // Add hours_old field for later use\n    const hoursOld = Math.round((new Date() - storyDate) / (1000 * 60 * 60));\n    item.json.hours_old = hoursOld;\n    return true;\n  }\n  return false;\n});\n\nconsole.log(`Filtered ${items.length} stories down to ${filteredItems.length} from last 48 hours`);\nreturn filteredItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        736
+      ],
+      "id": "3dbf74ee-0b31-4041-a7fe-5281d419023c",
+      "name": "48 Hour Filter3"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter stories to only include those from last 48 hours\nconst items = $input.all();\nconst fortyEightHoursAgo = new Date();\nfortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);\n\nconst filteredItems = items.filter(item => {\n  const storyDate = new Date(item.json.pubDate);\n  const isRecent = storyDate >= fortyEightHoursAgo;\n  \n  if (isRecent) {\n    // Add hours_old field for later use\n    const hoursOld = Math.round((new Date() - storyDate) / (1000 * 60 * 60));\n    item.json.hours_old = hoursOld;\n    return true;\n  }\n  return false;\n});\n\nconsole.log(`Filtered ${items.length} stories down to ${filteredItems.length} from last 48 hours`);\nreturn filteredItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        928
+      ],
+      "id": "9567cadb-3b92-4d97-bc6d-e34229a6a622",
+      "name": "48 Hour Filter4"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter stories to only include those from last 48 hours\nconst items = $input.all();\nconst fortyEightHoursAgo = new Date();\nfortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);\n\nconst filteredItems = items.filter(item => {\n  const storyDate = new Date(item.json.pubDate);\n  const isRecent = storyDate >= fortyEightHoursAgo;\n  \n  if (isRecent) {\n    // Add hours_old field for later use\n    const hoursOld = Math.round((new Date() - storyDate) / (1000 * 60 * 60));\n    item.json.hours_old = hoursOld;\n    return true;\n  }\n  return false;\n});\n\nconsole.log(`Filtered ${items.length} stories down to ${filteredItems.length} from last 48 hours`);\nreturn filteredItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        1120
+      ],
+      "id": "1a7fed38-64a5-4b3e-86d2-8740cd0e4b09",
+      "name": "48 Hour Filter5"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter stories to only include those from last 48 hours\nconst items = $input.all();\nconst fortyEightHoursAgo = new Date();\nfortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);\n\nconst filteredItems = items.filter(item => {\n  const storyDate = new Date(item.json.pubDate);\n  const isRecent = storyDate >= fortyEightHoursAgo;\n  \n  if (isRecent) {\n    // Add hours_old field for later use\n    const hoursOld = Math.round((new Date() - storyDate) / (1000 * 60 * 60));\n    item.json.hours_old = hoursOld;\n    return true;\n  }\n  return false;\n});\n\nconsole.log(`Filtered ${items.length} stories down to ${filteredItems.length} from last 48 hours`);\nreturn filteredItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        1312
+      ],
+      "id": "b33c3a74-dbca-47d1-a8eb-6490af17c469",
+      "name": "48 Hour Filter6"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter stories to only include those from last 48 hours\nconst items = $input.all();\nconst fortyEightHoursAgo = new Date();\nfortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);\n\nconst filteredItems = items.filter(item => {\n  const storyDate = new Date(item.json.pubDate);\n  const isRecent = storyDate >= fortyEightHoursAgo;\n  \n  if (isRecent) {\n    // Add hours_old field for later use\n    const hoursOld = Math.round((new Date() - storyDate) / (1000 * 60 * 60));\n    item.json.hours_old = hoursOld;\n    return true;\n  }\n  return false;\n});\n\nconsole.log(`Filtered ${items.length} stories down to ${filteredItems.length} from last 48 hours`);\nreturn filteredItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        1888
+      ],
+      "id": "07bf4a89-c188-4d55-947f-89e15d030d4b",
+      "name": "48 Hour Filter7"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Filter stories to only include those from last 48 hours\nconst items = $input.all();\nconst fortyEightHoursAgo = new Date();\nfortyEightHoursAgo.setHours(fortyEightHoursAgo.getHours() - 48);\n\nconst filteredItems = items.filter(item => {\n  const storyDate = new Date(item.json.pubDate);\n  const isRecent = storyDate >= fortyEightHoursAgo;\n  \n  if (isRecent) {\n    // Add hours_old field for later use\n    const hoursOld = Math.round((new Date() - storyDate) / (1000 * 60 * 60));\n    item.json.hours_old = hoursOld;\n    return true;\n  }\n  return false;\n});\n\nconsole.log(`Filtered ${items.length} stories down to ${filteredItems.length} from last 48 hours`);\nreturn filteredItems;\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1088,
+        1504
+      ],
+      "id": "fe89b0aa-cb36-4279-9245-19adbee8cce1",
+      "name": "48 Hour Filter8"
+    },
+    {
+      "parameters": {
+        "options": {
+          "maxTokens": 4000,
+          "temperature": 0.2
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+      "typeVersion": 1,
+      "position": [
+        -224,
+        1216
+      ],
+      "id": "e37518cd-592a-41b8-9f2b-a07d5b25730c",
+      "name": "Gpt4o-mini 3",
+      "credentials": {
+        "openRouterApi": {
+          "id": "NPxFdMwxFMJAvlFj",
+          "name": "OpenRouter account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"selected_story\": {\n      \"type\": \"object\",\n      \"properties\": {\n        \"title\": { \"type\": \"string\" },\n        \"summary\": { \"type\": \"string\" },\n        \"source\": { \"type\": \"string\" },\n        \"story_number\": { \"type\": \"integer\" },\n        \"hours_old\": { \"type\": \"integer\" },\n        \"emotional_impact\": { \"type\": \"integer\" },\n        \"global_relevance\": { \"type\": \"integer\" },\n        \"specificity\": { \"type\": \"integer\" },\n        \"total_score\": { \"type\": \"integer\" },\n        \"verification\": { \"type\": \"string\" }\n      },\n      \"required\": [\n        \"title\",\n        \"summary\",\n        \"source\",\n        \"story_number\",\n        \"hours_old\",\n        \"emotional_impact\",\n        \"global_relevance\",\n        \"specificity\",\n        \"total_score\",\n        \"verification\"\n      ],\n      \"additionalProperties\": false\n    },\n    \"selection_reason\": { \"type\": \"string\" },\n    \"all_stories_scoring\": {\n      \"type\": \"array\",\n      \"items\": {\n        \"type\": \"object\",\n        \"properties\": {\n          \"story_number\": { \"type\": \"integer\" },\n          \"title\": { \"type\": \"string\" },\n          \"source\": { \"type\": \"string\" },\n          \"emotional_impact\": { \"type\": \"integer\" },\n          \"global_relevance\": { \"type\": \"integer\" },\n          \"specificity\": { \"type\": \"integer\" },\n          \"total_score\": { \"type\": \"integer\" },\n          \"hours_old\": { \"type\": \"integer\" },\n          \"eligible\": { \"type\": \"boolean\" }\n        },\n        \"required\": [\n          \"story_number\",\n          \"title\",\n          \"source\",\n          \"emotional_impact\",\n          \"global_relevance\",\n          \"specificity\",\n          \"total_score\",\n          \"hours_old\",\n          \"eligible\"\n        ],\n        \"additionalProperties\": false\n      }\n    }\n  },\n  \"required\": [\"selected_story\", \"selection_reason\", \"all_stories_scoring\"],\n  \"additionalProperties\": false\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -32,
+        1216
+      ],
+      "id": "45d0c8cc-6ab6-4c0a-99be-7bab0d7c3966",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Normalize LLM output to a consistent root-level object.\n// Supports: structured under \"output\", structured at root, or legacy raw text.\n\nlet data = null;\n\n// 1) Structured under \"output\" (current behavior with Output Parser ON)\nif ($json.output && typeof $json.output === 'object') {\n  data = $json.output;\n\n// 2) Structured at root (in case parser returns directly)\n} else if ($json.selected_story && $json.all_stories_scoring && typeof $json.selection_reason === 'string') {\n  data = $json;\n\n// 3) Legacy: raw JSON string in $json.text (fallback path)\n} else if (typeof $json.text === 'string' && $json.text.trim()) {\n  let s = $json.text;\n\n  // Remove code fences if present\n  if (s.startsWith('```')) {\n    const m = s.match(/```(?:json)?\\s*([\\s\\S]*?)\\s*```/i);\n    if (m) s = m[1];\n  }\n\n  // Remove illegal backslashes before smart quotes\n  s = s.replace(/\\\\(?=[“”’])/g, '');\n\n  // Fix newlines between key and value (\":\" followed by newline)\n  s = s.replace(/:\\s*\\n\\s*/g, ': ');\n\n  // Clamp to outermost braces\n  const start = s.indexOf('{');\n  const end = s.lastIndexOf('}');\n  if (start >= 0 && end > start) s = s.slice(start, end + 1);\n\n  // Parse with one common repair for unclosed all_stories_scoring\n  try {\n    data = JSON.parse(s);\n  } catch (e) {\n    if (/\"all_stories_scoring\"\\s*:\\s*\\[[\\s\\S]*\\}\\s*$/.test(s) && !/\\]\\s*\\}\\s*$/.test(s)) {\n      s = s.replace(/\\}\\s*$/, \"]\\n}\"); // close the array then the object\n    }\n    data = JSON.parse(s); // will throw if still invalid\n  }\n\n} else {\n  throw new Error('Upstream did not provide structured JSON or text to parse. Keys present: ' + Object.keys($json).join(', '));\n}\n\n// Validate required top-level keys\nif (!data.selected_story || !Array.isArray(data.all_stories_scoring) || typeof data.selection_reason !== 'string') {\n  throw new Error('Missing required keys after normalization. Present keys: ' + Object.keys(data).join(', '));\n}\n\n// Deep validation for selected_story\nconst reqSel = [\"title\",\"summary\",\"source\",\"story_number\",\"hours_old\",\"emotional_impact\",\"global_relevance\",\"specificity\",\"total_score\",\"verification\"];\nconst missingSel = reqSel.filter(k => !(k in data.selected_story));\nif (missingSel.length) {\n  throw new Error('selected_story missing fields: ' + missingSel.join(', '));\n}\n\nreturn { json: data };"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        160,
+        1024
+      ],
+      "id": "0352b0ed-1316-4b15-9c48-f88be7d49615",
+      "name": "Format Output",
+      "alwaysOutputData": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Split Tavily Items": {
+      "main": [
+        [
+          {
+            "node": "Set Tavily Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Tavily Fields": {
+      "main": [
+        []
+      ]
+    },
+    "Remove Duplicates": {
+      "main": [
+        [
+          {
+            "node": "Combine Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "Good News Network",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Positive News UK",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Sunny Skyz",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "The Optimist Daily",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Good Good Good",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Nice News",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Epoch Times Bright",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Reasons to Be Cheerful",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "YES! Magazine",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Not All News is Bad!",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Combine Stories": {
+      "main": [
+        [
+          {
+            "node": "Select Story",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Story": {
+      "main": [
+        [
+          {
+            "node": "Format Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Article": {
+      "main": [
+        [
+          {
+            "node": "Ensure Final Line is Included",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily Search Topic": {
+      "main": [
+        [
+          {
+            "node": "Split Tavily Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Tavily API Key": {
+      "main": [
+        [
+          {
+            "node": "Tavily Search Topic",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gpt4o-mini 2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write Article",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Request Image (DALL-E)": {
+      "main": [
+        [
+          {
+            "node": "Store DALL-E Image on Google Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Store DALL-E Image on Google Drive": {
+      "main": [
+        [
+          {
+            "node": "Transform Shareable URL to Direct URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Transform Shareable URL to Direct URL": {
+      "main": [
+        [
+          {
+            "node": "Set Image URL Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ensure Final Line is Included": {
+      "main": [
+        [
+          {
+            "node": "Set Article Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Article Text": {
+      "main": [
+        [
+          {
+            "node": "Write Story-Centered Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get the Row Number For Formula": {
+      "main": [
+        [
+          {
+            "node": "Update Status, Image URL and Image Preview Formula to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Row Number for Newly Added Row in Daily Article": {
+      "main": [
+        [
+          {
+            "node": "Get the Row Number For Formula",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gpt4o-mini ": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Write Story-Centered Summary",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Write Story-Centered Summary": {
+      "main": [
+        [
+          {
+            "node": "Set Story-Centered Summary Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Story-Centered Summary Text": {
+      "main": [
+        [
+          {
+            "node": "Add Article and Story Centered Summary to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Add Article and Story Centered Summary to Sheet": {
+      "main": [
+        [
+          {
+            "node": "Request Image (DALL-E)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Image URL Fields": {
+      "main": [
+        [
+          {
+            "node": "Get Row Number for Newly Added Row in Daily Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Stories": {
+      "main": [
+        [
+          {
+            "node": "Remove Duplicates",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Positive News UK": {
+      "main": [
+        [
+          {
+            "node": "Limit News Stories1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Good News Network": {
+      "main": [
+        [
+          {
+            "node": "Limit News Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Sunny Skyz": {
+      "main": [
+        [
+          {
+            "node": "Limit News Stories2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "The Optimist Daily": {
+      "main": [
+        [
+          {
+            "node": "Limit News Stories3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit News Stories1": {
+      "main": [
+        [
+          {
+            "node": "Set RSS Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit News Stories": {
+      "main": [
+        [
+          {
+            "node": "Set RSS Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit News Stories2": {
+      "main": [
+        [
+          {
+            "node": "Set RSS Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit News Stories3": {
+      "main": [
+        [
+          {
+            "node": "Set RSS Fields3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit News Stories4": {
+      "main": [
+        [
+          {
+            "node": "Set RSS Fields4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set RSS Fields": {
+      "main": [
+        [
+          {
+            "node": "48 Hour Filter1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set RSS Fields1": {
+      "main": [
+        [
+          {
+            "node": "48 Hour Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit News Stories5": {
+      "main": [
+        [
+          {
+            "node": "Set RSS Fields5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit News Stories6": {
+      "main": [
+        [
+          {
+            "node": "Set RSS Fields6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set RSS Fields2": {
+      "main": [
+        [
+          {
+            "node": "48 Hour Filter2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set RSS Fields3": {
+      "main": [
+        [
+          {
+            "node": "48 Hour Filter3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set RSS Fields4": {
+      "main": [
+        [
+          {
+            "node": "48 Hour Filter4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set RSS Fields5": {
+      "main": [
+        [
+          {
+            "node": "48 Hour Filter5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set RSS Fields6": {
+      "main": [
+        [
+          {
+            "node": "48 Hour Filter6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Good Good Good": {
+      "main": [
+        [
+          {
+            "node": "Limit News Stories4",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Nice News": {
+      "main": [
+        [
+          {
+            "node": "Limit News Stories5",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Epoch Times Bright": {
+      "main": [
+        [
+          {
+            "node": "Limit News Stories6",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit News Stories7": {
+      "main": [
+        [
+          {
+            "node": "Set RSS Fields7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit News Stories8": {
+      "main": [
+        [
+          {
+            "node": "Set RSS Fields8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit News Stories9": {
+      "main": [
+        [
+          {
+            "node": "Set RSS Fields9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reasons to Be Cheerful": {
+      "main": [
+        [
+          {
+            "node": "Limit News Stories7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YES! Magazine": {
+      "main": [
+        [
+          {
+            "node": "Limit News Stories8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not All News is Bad!": {
+      "main": [
+        [
+          {
+            "node": "Limit News Stories9",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set RSS Fields7": {
+      "main": [
+        [
+          {
+            "node": "48 Hour Filter8",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set RSS Fields8": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set RSS Fields9": {
+      "main": [
+        [
+          {
+            "node": "48 Hour Filter7",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Today's Date": {
+      "main": [
+        [
+          {
+            "node": "Write Article",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "48 Hour Filter1": {
+      "main": [
+        [
+          {
+            "node": "Merge Stories",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "48 Hour Filter": {
+      "main": [
+        [
+          {
+            "node": "Merge Stories",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "48 Hour Filter2": {
+      "main": [
+        [
+          {
+            "node": "Merge Stories",
+            "type": "main",
+            "index": 2
+          }
+        ]
+      ]
+    },
+    "48 Hour Filter3": {
+      "main": [
+        [
+          {
+            "node": "Merge Stories",
+            "type": "main",
+            "index": 3
+          }
+        ]
+      ]
+    },
+    "48 Hour Filter4": {
+      "main": [
+        [
+          {
+            "node": "Merge Stories",
+            "type": "main",
+            "index": 4
+          }
+        ]
+      ]
+    },
+    "48 Hour Filter5": {
+      "main": [
+        [
+          {
+            "node": "Merge Stories",
+            "type": "main",
+            "index": 5
+          }
+        ]
+      ]
+    },
+    "48 Hour Filter6": {
+      "main": [
+        [
+          {
+            "node": "Merge Stories",
+            "type": "main",
+            "index": 6
+          }
+        ]
+      ]
+    },
+    "48 Hour Filter8": {
+      "main": [
+        [
+          {
+            "node": "Merge Stories",
+            "type": "main",
+            "index": 7
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Merge Stories",
+            "type": "main",
+            "index": 8
+          }
+        ]
+      ]
+    },
+    "48 Hour Filter7": {
+      "main": [
+        [
+          {
+            "node": "Merge Stories",
+            "type": "main",
+            "index": 9
+          }
+        ]
+      ]
+    },
+    "Gpt4o-mini 3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Select Story",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Select Story",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Format Output": {
+      "main": [
+        [
+          {
+            "node": "Set Today's Date",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "c9d0da93-9a5f-4fd8-aac4-35cf76ea6b77",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e39217d02d0a2d904fe9311382a9b214609d55f63d59a3ea24c67a5fa43c6ba6"
+  },
+  "id": "YyRDaG3GbBR4WAtR",
+  "tags": []
+}
