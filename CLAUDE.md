@@ -9,13 +9,14 @@ N8N workflow automation for generating **daily inspirational articles** from pos
 ## Critical Workflow Architecture
 
 ### Core Workflow Files
-- **`The Daily Energizer Article and Image Generator V3.json`** - Previous stable version (2,513 lines, 86KB)
 - **`The Daily Energizer Article and Image Generator V4.json`** - Latest version with enhanced features
   - Direct import into N8N platform for execution
   - Contains 4-layer anti-hallucination system
   - Full scoring visibility for all evaluated stories
   - Automated image generation and Google Sheets integration
   - Enhanced article processing with story-centered summaries
+- **`The Daily Energizer Article and Image Generator V3.json`** - Previous stable version (2,513 lines, 86KB)
+- **`The Daily Energizer Article and Image Generator V2-Jeremy.json`** - Legacy version (83KB)
 
 ### V4 Enhanced Data Flow Pipeline
 1. **RSS Collection** → 10 positive news feeds fetch stories with source tracking
@@ -31,7 +32,7 @@ N8N workflow automation for generating **daily inspirational articles** from pos
 ## N8N Commands
 
 ```bash
-# Import V4 workflow into N8N instance
+# Import V4 workflow (latest version)
 n8n import:workflow --input="The Daily Energizer Article and Image Generator V4.json"
 
 # Import V3 workflow (stable fallback)
@@ -206,8 +207,9 @@ workflows/daily-energizer/
 ```
 
 ### Critical Files
-- **Main Workflow V4**: `The Daily Energizer Article and Image Generator V4.json` (Latest with enhanced features)
+- **Main Workflow V4**: `The Daily Energizer Article and Image Generator V4.json` (Current production with enhanced features)
 - **Legacy Workflow V3**: `The Daily Energizer Article and Image Generator V3.json` (86KB, 2,513 lines)
+- **Legacy Workflow V2**: `The Daily Energizer Article and Image Generator V2-Jeremy.json` (83KB)
 - **Implementation History**: `features/requirements/IMPLEMENTATION-GUIDE.md`
 - **Client Requirements**: `features/requirements/BRENT-ACTION-PLAN.md`
 - **Feature Summary**: `FEATURE-UPDATES-SUMMARY.md`
@@ -223,7 +225,8 @@ workflows/daily-energizer/
 
 ### Workflow Versioning
 - **Current**: `The Daily Energizer Article and Image Generator V4.json` (Production)
-- **Previous**: `The Daily Energizer Article and Image Generator V3.json` (Stable fallback)
+- **Previous**: `The Daily Energizer Article and Image Generator V3.json` (Stable fallback - 86KB, 2,513 lines)
+- **Legacy**: `The Daily Energizer Article and Image Generator V2-Jeremy.json` (83KB)
 - **Backup naming**: `backup-YYYYMMDD.json`
 - **Development versions** should include descriptive suffixes
 

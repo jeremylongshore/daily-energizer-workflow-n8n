@@ -1,0 +1,67 @@
+{
+  "name": "The Daily Energizer Article and Image Generator V4",
+  "nodes": [
+    {
+      "parameters": {
+        "compare": "selectedFields",
+        "fieldsToCompare": "title",
+        "options": {}
+      },
+      "id": "3e8c99ce-4364-48ee-8ca1-47f20bd40a39",
+      "name": "Remove Duplicates",
+      "type": "n8n-nodes-base.removeDuplicates",
+      "typeVersion": 1,
+      "position": [
+        480,
+        2272
+      ]
+    },
+    {
+      "parameters": {},
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -2704,
+        2240
+      ],
+      "id": "3c1ba7e1-7ba0-4a47-b337-61f82a1cb20c"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=CRITICAL ANTI-HALLUCINATION AND OUTPUT REQUIREMENTS:\n\nYOU MUST FOLLOW THESE RULES OR THE SYSTEM WILL FAIL:\n1. You can ONLY select a story that is EXACTLY in the provided list\n2. You CANNOT create, modify, or reword ANY part of any story\n3. You MUST copy the title and summary EXACTLY as provided\n4. You MUST verify the story is less than 48 hours old\n5. You MUST output ONLY valid JSON with no additional text\n6. You MUST score ALL stories, not just the selected one\n\nCOMPREHENSIVE SCORING PROCESS:\nStep 1: Read each story carefully\nStep 2: Score EVERY story on ALL three criteria (even if >48 hours old):\n   - Emotional Impact (1-5): How uplifting and inspiring?\n   - Global Relevance (1-5): Universal appeal across cultures?\n   - Specificity (1-5): Concrete details, names, places?\nStep 3: Calculate total score for each story (sum of 3 criteria)\nStep 4: Mark eligibility: true if <=48 hours old, false if older\nStep 5: Select the ELIGIBLE story with highest total score\nStep 6: Copy EXACT titles, summaries, and sources for ALL stories\n\nStories to Evaluate:\n{{ $json.data }}\n\nOUTPUT ONLY THIS EXACT JSON STRUCTURE (no text before or after):\n{\n  \"selected_story\": {\n    \"title\": \"[exact title from the list]\",\n    \"summary\": \"[exact summary from the list]\",\n    \"source\": \"[exact source from the list]\",\n    \"story_number\": [number],\n    \"hours_old\": [number],\n    \"emotional_impact\": [1-5],\n    \"global_relevance\": [1-5],\n    \"specificity\": [1-5],\n    \"total_score\": [sum of 3 scores],\n    \"verification\": \"confirmed_from_list\"\n  },\n  \"selection_reason\": \"[one sentence explaining why this story scored highest among eligible stories]\",\n  \"all_stories_scoring\": [\n    {\n      \"story_number\": [number],\n      \"title\": \"[exact title]\",\n      \"source\": \"[exact source]\",\n      \"emotional_impact\": [1-5],\n      \"global_relevance\": [1-5],\n      \"specificity\": [1-5],\n      \"total_score\": [sum],\n      \"hours_old\": [number],\n      \"eligible\": [true/false]\n    }\n  ]\n}\n\nCRITICAL REMINDERS:\n- Output ONLY the JSON object above - no explanations\n- Include scoring for EVERY story in all_stories_scoring\n- Copy titles, summaries, and sources EXACTLY as provided (do NOT add HTML, tags, or escape sequences)\n- Replace bracketed placeholders with actual values\n- Ensure all string values are in quotes\n- Ensure all number values are NOT in quotes\n- Ensure the entire object parses correctly as JSON with no truncation\n- Any hallucination or invalid formatting will cause system failure",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "= You are an AI assistant for \"The Daily Energizer\" with STRICT JSON output requirements.\n\nCRITICAL OUTPUT RULES:\n1. You MUST output ONLY valid JSON - no text before or after\n2. You MUST include ALL required fields exactly as specified\n3. You MUST NOT add any markdown formatting (no ```json blocks)\n4. You MUST ensure proper JSON syntax with correct quotes and commas\n5. You MUST escape all quotes correctly (use \\\" not \" or \")\n6. You MUST provide complete JSON with no truncation\n7. You MUST score EVERY story in the provided list\n\nYour response should be a single JSON object that can be directly parsed.\n\nREQUIRED JSON STRUCTURE:\n- selected_story: object with title, summary, source, story_number, hours_old, and all scores\n- selection_reason: string explaining why this story won\n- all_stories_scoring: array with scoring for EVERY story\n- Do NOT insert line breaks between keys and values. Always write `\"key\": \"value\"` on one line.\n- Close all arrays and objects properly. Output must end with `]}`.\n\nRemember: Output ONLY the JSON object. No explanations, no formatting, just pure JSON.\n\nYou MUST return a valid JSON object, not a JSON string inside a field.\n\n"
+            }
+          ]
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.6,
+      "position": [
+        1552,
+        2272
+      ],
+      "id": "2500e0de-1131-449d-b151-602295afc16a",
+      "name": "Select Story",
+      "alwaysOutputData": true
+    }
+  ],
+  "pinData": {},
+  "connections": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "89f4a841-bf8c-4e62-a49e-06f2abb4051c",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "e39217d02d0a2d904fe9311382a9b214609d55f63d59a3ea24c67c6ba6"
+  },
+  "id": "YyRDaG3GbBR4WAtR",
+  "tags": []
+}
