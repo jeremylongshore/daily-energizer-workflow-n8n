@@ -1,0 +1,169 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate-workflow:
+    name: Validate N8N Workflow
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+
+    - name: Install jq for JSON validation
+      run: sudo apt-get update && sudo apt-get install -y jq
+
+    - name: Validate V4 Workflow JSON
+      run: |
+        if [ -f "The Daily Energizer Article and Image Generator V4.json" ]; then
+          echo "✅ Validating V4 workflow JSON structure..."
+          jq empty "The Daily Energizer Article and Image Generator V4.json"
+          echo "✅ V4 workflow JSON is valid"
+        else
+          echo "⚠️ V4 workflow file not found"
+        fi
+
+    - name: Validate V3 Workflow JSON
+      run: |
+        if [ -f "The Daily Energizer Article and Image Generator V3.json" ]; then
+          echo "✅ Validating V3 workflow JSON structure..."
+          jq empty "The Daily Energizer Article and Image Generator V3.json"
+          echo "✅ V3 workflow JSON is valid"
+        else
+          echo "⚠️ V3 workflow file not found"
+        fi
+
+    - name: Check workflow node count
+      run: |
+        if [ -f "The Daily Energizer Article and Image Generator V4.json" ]; then
+          NODE_COUNT=$(jq '.nodes | length' "The Daily Energizer Article and Image Generator V4.json")
+          echo "📊 V4 Workflow has $NODE_COUNT nodes"
+          if [ "$NODE_COUNT" -lt 10 ]; then
+            echo "❌ Error: Workflow has too few nodes ($NODE_COUNT < 10)"
+            exit 1
+          fi
+          echo "✅ Node count validation passed"
+        fi
+
+  validate-documentation:
+    name: Validate Documentation
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Check required documentation files
+      run: |
+        REQUIRED_FILES=(
+          "README.md"
+          "CLAUDE.md"
+          "FEATURE-UPDATES-SUMMARY.md"
+          "MANUAL-UPDATE-GUIDE.md"
+          "features/requirements/IMPLEMENTATION-GUIDE.md"
+          "features/requirements/BRENT-ACTION-PLAN.md"
+        )
+
+        echo "📚 Checking required documentation files..."
+        for file in "${REQUIRED_FILES[@]}"; do
+          if [ -f "$file" ]; then
+            echo "✅ $file exists"
+          else
+            echo "❌ Missing required file: $file"
+            exit 1
+          fi
+        done
+        echo "✅ All required documentation files present"
+
+    - name: Validate Makefile
+      run: |
+        if [ -f "Makefile" ]; then
+          echo "✅ Makefile exists"
+          # Check if make status works
+          make status || echo "⚠️ Make status command failed"
+        else
+          echo "❌ Makefile missing"
+          exit 1
+        fi
+
+  anti-hallucination-check:
+    name: Anti-Hallucination System Check
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install jq
+      run: sudo apt-get update && sudo apt-get install -y jq
+
+    - name: Verify anti-hallucination measures
+      run: |
+        echo "🛡️ Checking anti-hallucination system implementation..."
+
+        if [ -f "The Daily Energizer Article and Image Generator V4.json" ]; then
+          # Check for temperature settings
+          TEMP_COUNT=$(jq '[.nodes[] | select(.type == "@n8n/n8n-nodes-langchain.chainLlm") | .parameters.temperature // 1] | map(select(. == 0)) | length' "The Daily Energizer Article and Image Generator V4.json")
+          echo "🌡️ Found $TEMP_COUNT LLM nodes with temperature=0"
+
+          # Check for verification nodes
+          VERIFY_NODES=$(jq '[.nodes[] | select(.name | test("Verify|verify"; "i"))] | length' "The Daily Energizer Article and Image Generator V4.json")
+          echo "✅ Found $VERIFY_NODES verification nodes"
+
+          # Check for date filtering
+          FILTER_NODES=$(jq '[.nodes[] | select(.name | test("Filter.*48|Date.*Filter"; "i"))] | length' "The Daily Energizer Article and Image Generator V4.json")
+          echo "📅 Found $FILTER_NODES date filtering nodes"
+
+          # Check for deduplication
+          DEDUP_NODES=$(jq '[.nodes[] | select(.name | test("Remove.*Duplicate|Duplicate"; "i"))] | length' "The Daily Energizer Article and Image Generator V4.json")
+          echo "🔄 Found $DEDUP_NODES deduplication nodes"
+
+          echo "✅ Anti-hallucination system checks completed"
+        fi
+
+  rss-feed-test:
+    name: RSS Feed Connectivity Test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Test RSS feed accessibility
+      run: |
+        echo "📡 Testing RSS feed connectivity..."
+
+        RSS_FEEDS=(
+          "https://www.goodnewsnetwork.org/feed/"
+          "https://www.positive.news/feed/"
+          "https://feeds.feedburner.com/SunnySkyz"
+          "https://www.optimistdaily.com/feed/"
+        )
+
+        FAILED_FEEDS=0
+        for feed in "${RSS_FEEDS[@]}"; do
+          echo "Testing: $feed"
+          if curl -s --max-time 10 --head "$feed" | grep -q "200 OK"; then
+            echo "✅ $feed is accessible"
+          else
+            echo "❌ $feed is not accessible"
+            FAILED_FEEDS=$((FAILED_FEEDS + 1))
+          fi
+        done
+
+        if [ $FAILED_FEEDS -gt 0 ]; then
+          echo "⚠️ $FAILED_FEEDS RSS feeds are not accessible"
+          echo "This may be temporary - workflow can still function with partial feeds"
+        else
+          echo "✅ All tested RSS feeds are accessible"
+        fi

@@ -1,8 +1,12 @@
 # Daily Energizer Workflow
 
 [![Release](https://img.shields.io/github/v/release/jeremylongshore/daily-energizer-workflow)](https://github.com/jeremylongshore/daily-energizer-workflow/releases)
+[![CI](https://github.com/jeremylongshore/daily-energizer-workflow/workflows/CI/badge.svg)](https://github.com/jeremylongshore/daily-energizer-workflow/actions/workflows/ci.yml)
 [![N8N Workflow](https://img.shields.io/badge/N8N-Workflow-blue)](https://n8n.io)
 [![Anti-Hallucination](https://img.shields.io/badge/Anti--Hallucination-4%20Layers-green)](https://github.com/jeremylongshore/daily-energizer-workflow)
+[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![RSS Feeds](https://img.shields.io/badge/RSS%20Feeds-10%20Sources-orange)](https://github.com/jeremylongshore/daily-energizer-workflow#-rss-feed-sources)
+[![Temperature Zero](https://img.shields.io/badge/LLM%20Temperature-0%20(Deterministic)-red)](https://github.com/jeremylongshore/daily-energizer-workflow#anti-hallucination-system)
 
 N8N workflow automation for generating **daily inspirational articles** from positive news RSS feeds with comprehensive anti-hallucination measures, automated image generation, and advanced Google Sheets integration.
 
