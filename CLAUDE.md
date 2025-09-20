@@ -4,37 +4,47 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-N8N workflow automation for generating **daily inspirational articles** from positive news RSS feeds with comprehensive anti-hallucination measures and full scoring transparency.
+N8N workflow automation for generating **daily inspirational articles** from positive news RSS feeds with comprehensive anti-hallucination measures, full scoring transparency, and automated image generation.
 
 ## Critical Workflow Architecture
 
-### Core Workflow File
-- **`daily-energizer-workflow.json`** - Complete N8N workflow (70 nodes, 78KB)
+### Core Workflow Files
+- **`The Daily Energizer Article and Image Generator V3.json`** - Previous stable version (2,513 lines, 86KB)
+- **`The Daily Energizer Article and Image Generator V4.json`** - Latest version with enhanced features
   - Direct import into N8N platform for execution
   - Contains 4-layer anti-hallucination system
   - Full scoring visibility for all evaluated stories
+  - Automated image generation and Google Sheets integration
+  - Enhanced article processing with story-centered summaries
 
-### Data Flow Pipeline
+### V4 Enhanced Data Flow Pipeline
 1. **RSS Collection** → 10 positive news feeds fetch stories with source tracking
 2. **Date Filtering** → Removes stories older than 48 hours (prevents old content)
-3. **Story Selection** → LLM scores ALL stories on 3 criteria, selects highest
-4. **Verification** → Validates selected story exists in source list
-5. **Article Generation** → Creates article from verified story with source attribution
+3. **Story Deduplication** → Remove Duplicates node prevents repeated stories
+4. **Story Selection** → Enhanced LLM scores ALL stories on 3 criteria, selects highest
+5. **Verification** → Validates selected story exists in source list
+6. **Article Generation** → Creates full article with verified story and source attribution
+7. **Summary Generation** → Creates story-centered summary (200 words max)
+8. **Image Processing** → Generates images and converts shareable URLs to direct URLs
+9. **Google Sheets Integration** → Updates spreadsheet with article, image, and review status
 
 ## N8N Commands
 
 ```bash
-# Import workflow into N8N instance
-n8n import:workflow --input=daily-energizer-workflow.json
+# Import V4 workflow into N8N instance
+n8n import:workflow --input="The Daily Energizer Article and Image Generator V4.json"
+
+# Import V3 workflow (stable fallback)
+n8n import:workflow --input="The Daily Energizer Article and Image Generator V3.json"
 
 # Execute workflow (requires workflow ID from N8N)
 n8n execute --id=[workflow-id]
 
 # Export updated workflow
-n8n export:workflow --id=[workflow-id] --output=daily-energizer-workflow.json
+n8n export:workflow --id=[workflow-id] --output="The Daily Energizer Article and Image Generator V4.json"
 
 # Validate workflow JSON structure
-jq . daily-energizer-workflow.json > /dev/null && echo "Valid JSON"
+jq . "The Daily Energizer Article and Image Generator V4.json" > /dev/null && echo "Valid JSON"
 ```
 
 ## Critical Anti-Hallucination System (ALL 4 LAYERS REQUIRED)
@@ -164,6 +174,82 @@ Before deployment verify:
 ### N8N Version Compatibility
 - **N8N Cloud 1.110.1**: May require removing Structured Output Parser for complex JSON
 - **Alternative**: Use enhanced prompts for direct JSON output without parser
+
+## Development Workflow
+
+### Common Tasks
+```bash
+# Check workflow status
+make status
+
+# Validate JSON structure before deployment
+jq . "The Daily Energizer Article and Image Generator V3.json" > /dev/null && echo "Valid JSON"
+
+# Generate documentation (if needed)
+make create T=implementation-guide.md N=new-implementation.md
+
+# Create backup before major changes
+cp "The Daily Energizer Article and Image Generator V3.json" "backup-$(date +%Y%m%d).json"
+```
+
+### File Structure
+```
+workflows/daily-energizer/
+├── The Daily Energizer Article and Image Generator V3.json  # Main workflow (2,513 lines, 86KB)
+├── features/                                               # Feature documentation
+│   ├── PRDs/                                              # Product Requirements
+│   ├── ADRs/                                              # Architecture Decision Records
+│   ├── requirements/                                      # Implementation guides
+│   └── tasks/                                             # Task breakdowns
+├── docs/                                                  # Additional documentation
+└── ai-dev/                                               # AI development templates
+```
+
+### Critical Files
+- **Main Workflow V4**: `The Daily Energizer Article and Image Generator V4.json` (Latest with enhanced features)
+- **Legacy Workflow V3**: `The Daily Energizer Article and Image Generator V3.json` (86KB, 2,513 lines)
+- **Implementation History**: `features/requirements/IMPLEMENTATION-GUIDE.md`
+- **Client Requirements**: `features/requirements/BRENT-ACTION-PLAN.md`
+- **Feature Summary**: `FEATURE-UPDATES-SUMMARY.md`
+- **Manual Updates**: `MANUAL-UPDATE-GUIDE.md`
+
+## Version Control & Backup Strategy
+
+### Before Making Changes
+1. **Always backup the main workflow file first**
+2. **Test changes in N8N development environment**
+3. **Validate JSON structure with jq**
+4. **Document changes in appropriate feature files**
+
+### Workflow Versioning
+- **Current**: `The Daily Energizer Article and Image Generator V4.json` (Production)
+- **Previous**: `The Daily Energizer Article and Image Generator V3.json` (Stable fallback)
+- **Backup naming**: `backup-YYYYMMDD.json`
+- **Development versions** should include descriptive suffixes
+
+## V4 New Features & Enhancements
+
+### Enhanced Article Processing
+- **Story-Centered Summary**: Generates focused 200-word summaries
+- **Content Validation**: Ensures final signature line inclusion
+- **Duplicate Prevention**: Remove Duplicates node prevents repeated stories
+
+### Automated Image Generation
+- **Image Processing Pipeline**: Converts shareable URLs to direct URLs
+- **Google Drive Integration**: Transforms shareable links to viewable format
+- **Image Preview**: Formula-based image preview in Google Sheets
+
+### Advanced Google Sheets Integration
+- **Review Status Tracking**: "Pending Approval" status for workflow control
+- **Image URL Management**: Direct image URLs and preview formulas
+- **Enhanced Data Structure**: Better organization of article data
+
+### Key V4 Node Additions
+- `Remove Duplicates` - Prevents story repetition
+- `Write Story-Centered Summary` - Creates focused summaries
+- `Ensure Final Line is Included` - Content validation
+- `Transform Shareable URL to Direct URL` - Image processing
+- `Update Status, Image URL and Image Preview Formula` - Enhanced sheets integration
 
 ## Documentation References
 
